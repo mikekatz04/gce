@@ -73,7 +73,7 @@ def test():
     st = time.perf_counter()
     check = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, show_progress=False)
     et = time.perf_counter()
-    print('Time per frequency per light curve:'(et - st)/(num_lcs*num_freqs))
+    print('Time per frequency per light curve:', (et - st)/(num_lcs*num_freqs))
     checker = actual_freqs/test_freqs[np.argmin(check, axis=1)]
 
     sig = (np.min(check, axis=1) - np.mean(check, axis=1))/np.std(check, axis=1)

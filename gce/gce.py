@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import constants as ct
 from tqdm import tqdm
+import time
 
 from GCE import GCE
 
@@ -73,5 +74,6 @@ class ConditionalEntropy:
                                                    light_curve_mag_bin_edges.astype(np.float64),
                                                    number_of_pts.astype(np.int32),
                                                    freqs.astype(np.float64)))
+
 
         return np.concatenate(ce_vals_out, axis=0)

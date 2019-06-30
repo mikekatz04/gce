@@ -33,8 +33,8 @@ def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, ve
 
 def test():
 
-    num_lcs = 1000
-    num_freqs = int(2**16)
+    num_lcs = int(1e6)
+    num_freqs = int(2**13)
     min_period = 3 * 60.0  # 3 minutes
     max_period = 50.0*24*3600.0  # 50 days
 
@@ -47,7 +47,7 @@ def test():
 
     actual_freqs = np.random.uniform(low=min_freq, high=max_freq, size=num_lcs)
 
-    number_of_pts = np.random.random_integers(250, 300, size=num_lcs)
+    number_of_pts = np.random.random_integers(80, 97, size=num_lcs)
 
     max_mag_factor = 10.0
     min_mag_factor = 1.0
@@ -68,12 +68,14 @@ def test():
     #pyce_checks = np.asarray(ce_checks)
 
     ce = ConditionalEntropy()
-    batch_size = 200
+    batch_size = 10000
 
     st = time.perf_counter()
+
     check = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, show_progress=False)
     et = time.perf_counter()
     print('Time per frequency per light curve:', (et - st)/(num_lcs*num_freqs))
+    print('Total time for {} light curves and {} frequencies per lc:'.format(num_lcs, num_freqs), et - st)
     checker = actual_freqs/test_freqs[np.argmin(check, axis=1)]
 
     sig = (np.min(check, axis=1) - np.mean(check, axis=1))/np.std(check, axis=1)

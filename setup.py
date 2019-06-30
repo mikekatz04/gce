@@ -126,7 +126,7 @@ def cuda_install():
                 'gcc': ['-std=c99'], # '-g'],
                 'nvcc': [
                     '-arch=sm_70', '-std=c++11', '--default-stream=per-thread', '--ptxas-options=-v', '-c',
-                    '--compiler-options', "'-fPIC'","-G", "-g"] # for debugging
+                    '--compiler-options', "'-fPIC'"]#,"-G", "-g"] # for debugging
                 },
                 include_dirs = [numpy_include, CUDA['include'], 'gce/src']
             )

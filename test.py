@@ -41,8 +41,6 @@ def test():
     min_freq = 1./max_period
     max_freq = 1./min_period
 
-    print('%.18e'%min_freq)
-
     baseline = 1*ct.Julian_year # 30 days
 
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
@@ -73,7 +71,7 @@ def test():
     batch_size = 200
 
     st = time.perf_counter()
-    check = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, show_progress=True)
+    check = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, show_progress=False)
     et = time.perf_counter()
     print((et - st)/(num_lcs*num_freqs))
     checker = actual_freqs/test_freqs[np.argmin(check, axis=1)]

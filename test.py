@@ -33,7 +33,7 @@ def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, ve
 
 def test():
 
-    num_lcs = int(1e6)
+    num_lcs = int(1e5)
     num_freqs = int(2**13)
     min_period = 3 * 60.0  # 3 minutes
     max_period = 50.0*24*3600.0  # 50 days
@@ -68,7 +68,7 @@ def test():
     #pyce_checks = np.asarray(ce_checks)
 
     ce = ConditionalEntropy()
-    batch_size = 10000
+    batch_size = 500
 
     st = time.perf_counter()
 

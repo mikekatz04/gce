@@ -45,6 +45,7 @@ class ConditionalEntropy:
 
         ce_vals_out = []
         for i, light_curve_split in iterator:
+            #st = time.perf_counter()
             max_length = 0
             number_of_pts = np.zeros((len(light_curve_split),)).astype(int)
             light_curve_mag_max = np.zeros((len(light_curve_split),))
@@ -69,6 +70,8 @@ class ConditionalEntropy:
             light_curve_mags = light_curve_mags.flatten()
             light_curve_mag_bin_edges = light_curve_mag_bin_edges.flatten()
 
+            #et = time.perf_counter()
+            #print('python time:', (et - st))
             ce_vals_out.append( self.gce.conditional_entropy(light_curve_times.astype(np.float64),
                                                    light_curve_mags.astype(np.float64),
                                                    light_curve_mag_bin_edges.astype(np.float64),

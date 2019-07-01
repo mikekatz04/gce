@@ -12,13 +12,16 @@ class GCE {
 
   int num_lcs;
   int num_freqs;
+  int num_pdots;
 
   fod *d_time_vals;
   fod *d_mag_vals;
   fod *d_mag_bin_edges;
   int *d_num_pts_arr;
   fod *d_freqs;
+  fod *d_pdots;
   fod *d_ce_vals;
+  fod *d_min_light_curve_times;
 
 
 public:
@@ -37,7 +40,7 @@ public:
 
   ~GCE(); // destructor
 
-  void conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, fod *mag_vals, fod *mag_bin_edges, int *num_pts_arr, int num_pts_max, fod *freqs, int num_freqs_);
+  void conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, fod *mag_vals, fod *mag_bin_edges, int *num_pts_arr, int num_pts_max, fod *freqs, int num_freqs_, fod *pdots, int num_pdots, fod *min_light_curve_times);
 };
 
 #endif //__MANAGER_H__

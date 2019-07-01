@@ -25,7 +25,7 @@ class ConditionalEntropy:
 
         self.gce = GCE(self.phase_bins, self.mag_bins)
 
-    def batched_run_const_nfreq(self, lightcurves, batch_size, freqs, show_progress=True):
+    def batched_run_const_nfreq(self, lightcurves, batch_size, freqs, pdots, show_progress=True):
         """
         lightcurves should be list of light curves (number of lcs, number of points for lc, 2) 2-> time, mag
         """
@@ -61,6 +61,8 @@ class ConditionalEntropy:
                 light_curve_arr[j, :len(lc)] = np.asarray(lc)
 
             light_curve_times = light_curve_arr[:, :, 0]
+            min_light_curve_times = light_curve_times[:, 0]
+            
             light_curve_mags = light_curve_arr[:, :, 1]
 
             light_curve_mag_bin_edges = np.asarray([np.linspace(min_val*0.999, max_val*1.001, self.mag_bins+1) for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max)])
@@ -76,7 +78,9 @@ class ConditionalEntropy:
                                                    light_curve_mags.astype(np.float64),
                                                    light_curve_mag_bin_edges.astype(np.float64),
                                                    number_of_pts.astype(np.int32),
-                                                   freqs.astype(np.float64)))
+                                                   freqs.astype(np.float64),
+                                                   pdots.astype(np.float64),
+                                                   min_light_curve_times.astype(np.float64)))
 
 
         return np.concatenate(ce_vals_out, axis=0)

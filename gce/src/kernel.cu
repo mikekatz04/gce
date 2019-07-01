@@ -4,12 +4,13 @@
 
 #define NUM_THREADS 256
 
-__device__ fod ce (fod frequency, fod* phase_bin_edges, fod* mag_bin_edges, fod* time_vals, fod* mag_vals, int npoints, int mag_bins, int phase_bins, fod* mag_bin_vals, int offset, int lc_i){
+__device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges, fod* mag_bin_edges, fod* time_vals, fod* mag_vals, int npoints, int mag_bins, int phase_bins, fod* mag_bin_vals, int offset, int lc_i, fod lc_start_time){
     fod point_frac = 1./((fod) npoints);
     fod period = 1./frequency;
     fod folded_val = 0.0, mag=0.0;
     int l = 1;
     fod sum_ij = 0.0;
+    fod t_val = 0.0;
 
     for (int i=0; i<mag_bins; i++){
         mag_bin_vals[offset + i] = 0.0;
@@ -20,7 +21,8 @@ __device__ fod ce (fod frequency, fod* phase_bin_edges, fod* mag_bin_edges, fod*
     for (int j=0; j<phase_bins; j++){
         current_phase_prob = 0.0;
         for (int k=0; k<npoints; k++){
-            folded_val = fmod(time_vals[k], period)*frequency; // between 0 and 1
+            t_val = time_vals[k] - lc_start_time;
+            folded_val = fmod((t_val-0.5*pdot/period*(t_val*t_val)), period)*frequency; // between 0 and 1
             if ((folded_val >= phase_bin_edges[j]) && (folded_val < phase_bin_edges[j+1])){
                 l = 1;
                 mag = mag_vals[k];
@@ -60,13 +62,16 @@ __device__ fod ce (fod frequency, fod* phase_bin_edges, fod* mag_bin_edges, fod*
     return sum_ij;
 }
 
-__global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* phase_bin_edges, fod* mag_bin_edges, fod* time_vals, fod* mag_vals, int *num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs){
+__global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int num_pdots, fod* phase_bin_edges, fod* mag_bin_edges, fod* time_vals, fod* mag_vals, int *num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, fod* min_light_curve_times){
     int i = blockIdx.y*blockDim.x + threadIdx.x;
     int lc_i = blockIdx.x;
+    int pdot_i = blockIdx.z;
     if (lc_i >= num_lcs) return;
     if (i >= num_freqs) return;
+    if (pdot_i >= num_pdots) return;
 
     int num_pts_this_lc = num_pts_arr[lc_i];
+    fod lc_start_time = min_light_curve_times[lc_i];
 
     // TODO: make this adjustable: https://devblogs.nvidia.com/using-shared-memory-cuda-cc/  !!!!
     int offset = mag_bins*threadIdx.x;
@@ -81,7 +86,7 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* phase_bin_e
         for (int j=0; j<=phase_bins; j++) share_bins_phase[j] = phase_bin_edges[j];
         for (int j=0; j<num_pts_this_lc; j++) share_t_vals[j] = time_vals[lc_i*num_pts_max + j];
         for (int j=0; j<num_pts_this_lc; j++) share_magnitude[j] = mag_vals[lc_i*num_pts_max + j];
-        # if __CUDA_ARCH__>=200
+        /*# if __CUDA_ARCH__>=200
         if ((freqs[i] < 2.314814814814814839e-07) && (lc_i == 1)){
             printf("%.18e\n", freqs[i]);
             for (int jj=0; jj<=mag_bins; jj++) printf("%e, ", share_bins_mag[jj]);
@@ -93,7 +98,7 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* phase_bin_e
     }
     __syncthreads();
 
-    ce_vals[lc_i*num_freqs + i] = ce(freqs[i], share_bins_phase, share_bins_mag, share_t_vals, share_magnitude, num_pts_this_lc, mag_bins, phase_bins, share_mag_bin_vals, offset, lc_i);
+    ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], share_bins_phase, share_bins_mag, share_t_vals, share_magnitude, num_pts_this_lc, mag_bins, phase_bins, share_mag_bin_vals, offset, lc_i, lc_start_time);
 }
 
 /*

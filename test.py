@@ -33,10 +33,14 @@ def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, ve
 
 def test():
 
-    num_lcs = int(1e5)
+    num_lcs = int(1e3)
     num_freqs = int(2**13)
+    num_pdots = int(2**8)
     min_period = 3 * 60.0  # 3 minutes
     max_period = 50.0*24*3600.0  # 50 days
+
+    max_pdot = 1e-6
+    min_pdot = 1e-8
 
     min_freq = 1./max_period
     max_freq = 1./min_period
@@ -44,8 +48,10 @@ def test():
     baseline = 1*ct.Julian_year # 30 days
 
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
+    test_pdots = np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
 
     actual_freqs = np.random.uniform(low=min_freq, high=max_freq, size=num_lcs)
+    actual_pdots = np.random.uniform(low=min_pdot, high=max_pdot, size=num_lcs)
 
     number_of_pts = np.random.random_integers(80, 97, size=num_lcs)
 
@@ -55,11 +61,12 @@ def test():
 
     lcs = []
     ce_checks = []
-    for i, (num_pts, freq, mag_fac) in enumerate(zip(number_of_pts, actual_freqs, mag_factors)):
-        time_vals = np.random.uniform(low=0.0, high=baseline, size=num_pts)
+
+    for i, (num_pts, freq, pdot, mag_fac) in enumerate(zip(number_of_pts, actual_freqs, actual_pdots, mag_factors)):
+        time_vals = np.sort(np.random.uniform(low=0.0, high=baseline, size=num_pts))
         initial_phase = np.random.uniform(low=0.0, high=2*np.pi)
         vert_shift = np.random.uniform(low=mag_fac, high=3*mag_fac)
-        mags = mag_fac*np.sin(2*np.pi*freq*time_vals + initial_phase) + vert_shift
+        mags = mag_fac*np.sin(2*np.pi*(freq*time_vals + 1./2.*pdot*time_vals**2) + initial_phase) + vert_shift
         lcs.append(np.array([time_vals, mags]).T)
         verbose = True if i == 1 else False
         #check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
@@ -68,19 +75,19 @@ def test():
     #pyce_checks = np.asarray(ce_checks)
 
     ce = ConditionalEntropy()
-    batch_size = 500
+    batch_size = 200
 
     st = time.perf_counter()
 
-    check = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, show_progress=False)
+    check = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, test_pdots, show_progress=True)
     et = time.perf_counter()
-    print('Time per frequency per light curve:', (et - st)/(num_lcs*num_freqs))
-    print('Total time for {} light curves and {} frequencies per lc:'.format(num_lcs, num_freqs), et - st)
-    checker = actual_freqs/test_freqs[np.argmin(check, axis=1)]
+    print('Time per frequency per pdot per light curve:', (et - st)/(num_lcs*num_freqs*num_pdots))
+    print('Total time for {} light curves and {} frequencies and {} pdots per lc:'.format(num_lcs, num_freqs, num_pdots), et - st)
+    #checker = actual_freqs/test_freqs[np.argmin(check, axis=1)]
 
-    sig = (np.min(check, axis=1) - np.mean(check, axis=1))/np.std(check, axis=1)
+    #sig = (np.min(check, axis=1) - np.mean(check, axis=1))/np.std(check, axis=1)
 
-    print('num > 10:', len(np.where(sig<-10.0)[0])/num_lcs)
+    #print('num > 10:', len(np.where(sig<-10.0)[0])/num_lcs)
 
     import pdb; pdb.set_trace()
 

@@ -41,9 +41,10 @@ GCE::GCE (int phase_bins_, int mag_bins_){
 }
 
 
-void GCE::conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, fod *mag_vals, fod *mag_bin_edges, int *num_pts_arr, int num_pts_max, fod *freqs, int num_freqs_){
+void GCE::conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, fod *mag_vals, fod *mag_bin_edges, int *num_pts_arr, int num_pts_max, fod *freqs, int num_freqs_, fod *pdots, int num_pdots_, fod *min_light_curve_times){
     num_lcs = num_lcs_;
     num_freqs = num_freqs_;
+    num_pdots = num_pdots_;
 
     // allocate and copy
     gpuErrchk(cudaMalloc(&d_time_vals, num_lcs*num_pts_max*sizeof(fod)));
@@ -58,29 +59,37 @@ void GCE::conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, fod *m
     gpuErrchk(cudaMalloc(&d_freqs, num_freqs*sizeof(fod)));
     gpuErrchk(cudaMemcpy(d_freqs, freqs, num_freqs*sizeof(fod), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&d_ce_vals, num_freqs*num_lcs*sizeof(fod)));
+    gpuErrchk(cudaMalloc(&d_pdots, num_pdots*sizeof(fod)));
+    gpuErrchk(cudaMemcpy(d_pdots, pdots, num_pdots*sizeof(fod), cudaMemcpyHostToDevice));
+
+    gpuErrchk(cudaMalloc(&d_ce_vals, num_pdots*num_freqs*num_lcs*sizeof(fod)));
 
     gpuErrchk(cudaMalloc(&d_num_pts_arr, num_lcs*sizeof(int)));
     gpuErrchk(cudaMemcpy(d_num_pts_arr, num_pts_arr, num_lcs*sizeof(int), cudaMemcpyHostToDevice));
 
+    gpuErrchk(cudaMalloc(&d_min_light_curve_times, num_lcs*sizeof(fod)));
+    gpuErrchk(cudaMemcpy(d_min_light_curve_times, min_light_curve_times, num_lcs*sizeof(fod), cudaMemcpyHostToDevice));
+
 
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
-    dim3 griddim(num_lcs, nblocks);
+    dim3 griddim(num_lcs, nblocks, num_pdots);
 
-    kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_phase_bin_edges, d_mag_bin_edges, d_time_vals, d_mag_vals, d_num_pts_arr, num_pts_max, mag_bins, phase_bins, num_lcs);
+    kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_phase_bin_edges, d_mag_bin_edges, d_time_vals, d_mag_vals, d_num_pts_arr, num_pts_max, mag_bins, phase_bins, num_lcs, d_min_light_curve_times);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 
     // transfer ce vals
-    cudaMemcpy(ce_vals, d_ce_vals, num_freqs*num_lcs*sizeof(fod), cudaMemcpyDeviceToHost);
+    cudaMemcpy(ce_vals, d_ce_vals, num_pdots*num_freqs*num_lcs*sizeof(fod), cudaMemcpyDeviceToHost);
 
     // free all the memory
     gpuErrchk(cudaFree(d_time_vals));
     gpuErrchk(cudaFree(d_mag_vals));
     gpuErrchk(cudaFree(d_mag_bin_edges));
     gpuErrchk(cudaFree(d_freqs));
+    gpuErrchk(cudaFree(d_pdots));
     gpuErrchk(cudaFree(d_ce_vals));
     gpuErrchk(cudaFree(d_num_pts_arr));
+    gpuErrchk(cudaFree(d_min_light_curve_times));
 }
 
 GCE::~GCE() {

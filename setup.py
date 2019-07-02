@@ -113,7 +113,7 @@ def cuda_install():
     # include_gsl_dir = "/opt/local/include"
 
     ext = Extension('GCE',
-            sources = ['gce/src/manager.cu', 'gce/GCE.pyx'],
+            sources = ['gcex/src/manager.cu', 'gcex/GCE.pyx'],
             library_dirs = [CUDA['lib64']],
             libraries = ['cudart'],
             language = 'c++',
@@ -125,10 +125,18 @@ def cuda_install():
             extra_compile_args= {
                 'gcc': ['-std=c99'], # '-g'],
                 'nvcc': [
-                    '-arch=sm_70', '-std=c++11', '--default-stream=per-thread', '--ptxas-options=-v', '-c',
+                    '-arch=sm_50',
+                    '-gencode=arch=compute_50,code=sm_50',
+                    '-gencode=arch=compute_52,code=sm_52',
+                    '-gencode=arch=compute_60,code=sm_60',
+                    '-gencode=arch=compute_61,code=sm_61',
+                    '-gencode=arch=compute_70,code=sm_70',
+                    '-gencode=arch=compute_75,code=sm_75',
+                    '-gencode=arch=compute_75,code=compute_75',
+                    '-std=c++11', '--default-stream=per-thread', '--ptxas-options=-v', '-c',
                     '--compiler-options', "'-fPIC'"]#,"-G", "-g"] # for debugging
                 },
-                include_dirs = [numpy_include, CUDA['include'], 'gce/src']
+                include_dirs = [numpy_include, CUDA['include'], 'gcex/src']
             )
 
 
@@ -148,12 +156,12 @@ def cuda_install():
 
 
 def wrapper_install():
-    setup(name = 'gce',
+    setup(name = 'gcex',
           # Random metadata. there's more you can supply
           author = 'Michael Katz',
           version = '0.1',
-          packages=['gce'],
-           py_modules=['gce.gce'],
+          packages=['gcex'],
+           py_modules=['gcex.gce'],
 
           # Since the package has c code, the egg cannot be zipped
           zip_safe = False)

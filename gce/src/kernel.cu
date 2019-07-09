@@ -78,14 +78,14 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int 
     __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
     __shared__ fod share_bins_mag[10+1];
     __shared__ fod share_bins_phase[15+1];
-    __shared__ fod share_t_vals[100];
-    __shared__ fod share_magnitude[100];
+    //__shared__ fod share_t_vals[100];
+    //__shared__ fod share_magnitude[100];
 
     if (threadIdx.x == 0){
         for (int j=0; j<=mag_bins; j++) share_bins_mag[j] = mag_bin_edges[lc_i*(mag_bins+1) + j];
         for (int j=0; j<=phase_bins; j++) share_bins_phase[j] = phase_bin_edges[j];
-        for (int j=0; j<num_pts_this_lc; j++) share_t_vals[j] = time_vals[lc_i*num_pts_max + j];
-        for (int j=0; j<num_pts_this_lc; j++) share_magnitude[j] = mag_vals[lc_i*num_pts_max + j];
+        //for (int j=0; j<num_pts_this_lc; j++) share_t_vals[j] = time_vals[lc_i*num_pts_max + j];
+        //for (int j=0; j<num_pts_this_lc; j++) share_magnitude[j] = mag_vals[lc_i*num_pts_max + j];
         /*# if __CUDA_ARCH__>=200
         if ((freqs[i] < 2.314814814814814839e-07) && (lc_i == 1)){
             printf("%.18e\n", freqs[i]);
@@ -98,7 +98,7 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int 
     }
     __syncthreads();
 
-    ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], share_bins_phase, share_bins_mag, share_t_vals, share_magnitude, num_pts_this_lc, mag_bins, phase_bins, share_mag_bin_vals, offset, lc_i, lc_start_time);
+    ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], share_bins_phase, share_bins_mag, &(time_vals[lc_i*num_pts_max]), &(mag_vals[lc_i*num_pts_max]), num_pts_this_lc, mag_bins, phase_bins, share_mag_bin_vals, offset, lc_i, lc_start_time);
 }
 
 /*

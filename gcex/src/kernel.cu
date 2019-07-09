@@ -22,10 +22,18 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges, fod* mag_bin_e
         current_phase_prob = 0.0;
         for (int k=0; k<npoints; k++){
             t_val = time_vals[k] - lc_start_time;
+<<<<<<< HEAD:gce/src/kernel.cu
+=======
+            
+>>>>>>> mcoughlin-setup:gcex/src/kernel.cu
             folded_val = fmod(t_val-0.5*pdot*frequency*(t_val*t_val), period)*frequency; // between 0 and 1
             if (folded_val < 0) {
                 folded_val = 1 + folded_val;
             }
+<<<<<<< HEAD:gce/src/kernel.cu
+=======
+
+>>>>>>> mcoughlin-setup:gcex/src/kernel.cu
             if ((folded_val >= phase_bin_edges[j]) && (folded_val < phase_bin_edges[j+1])){
                 l = 1;
                 mag = mag_vals[k];

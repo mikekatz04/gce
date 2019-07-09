@@ -3,7 +3,7 @@ import pdb
 import scipy.constants as ct
 import time
 
-from gce.gce import ConditionalEntropy
+from gcex.gce import ConditionalEntropy
 
 def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, verbose=False):
     ce_vals = np.zeros_like(freqs)
@@ -33,7 +33,7 @@ def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, ve
 
 def test():
 
-    num_lcs = int(1e3)
+    num_lcs = int(1e1)
     num_freqs = int(2**13)
     num_pdots = int(2**8)
     min_period = 3 * 60.0  # 3 minutes

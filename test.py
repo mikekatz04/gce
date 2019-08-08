@@ -4,8 +4,8 @@ import scipy.constants as ct
 import time
 from astropy.io import ascii
 
-from gcex.gce import ConditionalEntropy
 from ztfperiodic import simulate
+from gcex.gce import ConditionalEntropy
 
 def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, verbose=False):
     ce_vals = np.zeros_like(freqs)
@@ -40,11 +40,13 @@ def read_helper(fp):
         data = np.asarray(ascii.read(fp))
         keys = data.dtype.names
 
-    params = {key: data[key] for key in keys if key not in ['m1', 'm2']}
+    params = {key: data[key] for key in keys}
     if 'q' not in keys:
         m1 = data['m1']
         m2 = data['m2']
         params['q'] = m1/m2 * (m1 >= m2) + m2/m1 * (m1 < m2)
+
+
     return params
 
 
@@ -73,10 +75,9 @@ def test(input_dict):
     for lc_i, n in zip(np.arange(num_lcs), number_of_pts):
         # form dictionary
         params = {key: input_dict[key][lc_i] for key in keys}
-        import pdb; pdb.set_trace()
 
         t_obs = simulate.time(n=n, mean_dt=3, sig_t=2)
-        mag, phase, err = simulate.pdot_lc(t_obs, **params)
+        mag, phase, err = simulate.pdot_lc(t_obs, plot_nopdot=None, **params)
         """mag=None, absmag=True, d=None, Pdot=Pdot, radius_1=r1/a, radius_2=r2/a, sbratio=sbratio, incl=i,
            light_3 = 0, t_zero = 0, period = P0, a = a, q = m1/m2,
            f_c = None, f_s = None,
@@ -98,12 +99,10 @@ def test(input_dict):
 
         lcs.append(np.array([t_obs, mag]).T)
 
-
         #check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
         #ce_checks.append(check)
 
     #pyce_checks = np.asarray(ce_checks)
-
     ce = ConditionalEntropy()
     batch_size = 200
 

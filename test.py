@@ -2,8 +2,10 @@ import numpy as np
 import pdb
 import scipy.constants as ct
 import time
+from astropy.io import ascii
 
 from gcex.gce import ConditionalEntropy
+from ztfperiodic import simulate
 
 def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, verbose=False):
     ce_vals = np.zeros_like(freqs)
@@ -31,9 +33,24 @@ def py_check_ce(freqs, time_vals, magnitude_vals, mag_bins=10, phase_bins=15, ve
 
     return ce_vals
 
-def test():
 
-    num_lcs = int(1e1)
+def read_helper(fp):
+    # add new routines as necessary
+    if fp[-4:] == '.txt':
+        data = np.asarray(ascii.read(fp))
+        keys = data.dtype.names
+
+    params = {key: data[key] for key in keys if key not in ['m1', 'm2']}
+    if 'q' not in keys:
+        m1 = data['m1']
+        m2 = data['m2']
+        params['q'] = m1/m2 * (m1 >= m2) + m2/m1 * (m1 < m2)
+    return params
+
+
+def test(input_dict):
+    keys = list(input_dict.keys())
+    num_lcs = len(input_dict[keys[0]])
     num_freqs = int(2**13)
     num_pdots = int(2**8)
     min_period = 3 * 60.0  # 3 minutes
@@ -50,25 +67,38 @@ def test():
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
     test_pdots = np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
 
-    actual_freqs = np.random.uniform(low=min_freq, high=max_freq, size=num_lcs)
-    actual_pdots = np.random.uniform(low=min_pdot, high=max_pdot, size=num_lcs)
-
-    number_of_pts = np.random.random_integers(80, 97, size=num_lcs)
-
-    max_mag_factor = 10.0
-    min_mag_factor = 1.0
-    mag_factors = np.random.uniform(low=min_mag_factor, high=max_mag_factor, size=num_lcs)
-
     lcs = []
     ce_checks = []
+    number_of_pts = np.random.random_integers(80, 97, size=num_lcs)
+    for lc_i, n in zip(np.arange(num_lcs), number_of_pts):
+        # form dictionary
+        params = {key: input_dict[key][lc_i] for key in keys}
+        import pdb; pdb.set_trace()
 
-    for i, (num_pts, freq, pdot, mag_fac) in enumerate(zip(number_of_pts, actual_freqs, actual_pdots, mag_factors)):
-        time_vals = np.sort(np.random.uniform(low=0.0, high=baseline, size=num_pts))
-        initial_phase = np.random.uniform(low=0.0, high=2*np.pi)
-        vert_shift = np.random.uniform(low=mag_fac, high=3*mag_fac)
-        mags = mag_fac*np.sin(2*np.pi*(freq*time_vals + 1./2.*pdot*time_vals**2) + initial_phase) + vert_shift
-        lcs.append(np.array([time_vals, mags]).T)
-        verbose = True if i == 1 else False
+        t_obs = simulate.time(n=n, mean_dt=3, sig_t=2)
+        mag, phase, err = simulate.pdot_lc(t_obs, **params)
+        """mag=None, absmag=True, d=None, Pdot=Pdot, radius_1=r1/a, radius_2=r2/a, sbratio=sbratio, incl=i,
+           light_3 = 0, t_zero = 0, period = P0, a = a, q = m1/m2,
+           f_c = None, f_s = None,
+           ldc_1 = None, ldc_2 = None,
+           gdc_1 = None, gdc_2 = None,
+           didt = None, domdt = None,
+           rotfac_1 = 1, rotfac_2 = 1,
+           hf_1 = 1.5, hf_2 = 1.5,
+           bfac_1 = None, bfac_2 = None,
+           heat_1 = None, heat_2 = None,
+           lambda_1 = None, lambda_2 = None,
+           vsini_1 = None, vsini_2 = None,
+           t_exp=None, n_int=None,
+           grid_1='default', grid_2='default',
+           ld_1=None, ld_2=None,
+           shape_1='sphere', shape_2='sphere',
+           spots_1=None, spots_2=None,
+           exact_grav=False, verbose=1, plot_nopdot=True,savefig=False)"""
+
+        lcs.append(np.array([t_obs, mag]).T)
+
+
         #check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
         #ce_checks.append(check)
 
@@ -93,4 +123,5 @@ def test():
 
 
 if __name__ == "__main__":
-    test()
+    input_dict = read_helper('test_params.txt')
+    test(input_dict)

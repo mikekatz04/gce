@@ -2,7 +2,7 @@ import numpy as np
 
 from ztfperiodic import simulate
 
-def get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25):
+def get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25, mean_dt=20, sig_t=10):
     keys = list(input_dict.keys())
     num_lcs = len(input_dict[keys[0]])
 
@@ -13,7 +13,7 @@ def get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25):
         # form dictionary
         params = {key: input_dict[key][lc_i] for key in keys}
 
-        t_obs = simulate.time(n=n, mean_dt=3, sig_t=3)
+        t_obs = simulate.time(n=n, mean_dt=mean_dt, sig_t=sig_t)
 
         mag, phase, err = simulate.pdot_lc(t_obs, plot_nopdot=None, **params)
         """mag=None, absmag=True, d=None, Pdot=Pdot, radius_1=r1/a, radius_2=r2/a, sbratio=sbratio, incl=i,

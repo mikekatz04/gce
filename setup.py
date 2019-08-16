@@ -131,8 +131,8 @@ def cuda_install():
                     '-gencode=arch=compute_60,code=sm_60',
                     '-gencode=arch=compute_61,code=sm_61',
                     '-gencode=arch=compute_70,code=sm_70',
-                    '-gencode=arch=compute_75,code=sm_75',
-                    '-gencode=arch=compute_75,code=compute_75',
+                    #'-gencode=arch=compute_75,code=sm_75',
+                    #'-gencode=arch=compute_75,code=compute_75',
                     '-std=c++11', '--default-stream=per-thread', '--ptxas-options=-v', '-c',
                     '--compiler-options', "'-fPIC'"]#,"-G", "-g"] # for debugging
                 },
@@ -161,7 +161,7 @@ def wrapper_install():
           author = 'Michael Katz',
           version = '0.1',
           packages=['gcex', 'gcex.utils'],
-           py_modules=['gcex.gce', 'gcex.uitls.getlcs', 'gcex.uitls.io', 'gcex.uitls.suppliment'],
+           py_modules=['gcex.gce', 'gcex.utils.getlcs', 'gcex.utils.io', 'gcex.utils.suppliment'],
 
           # Since the package has c code, the egg cannot be zipped
           zip_safe = False)

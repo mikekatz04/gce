@@ -54,7 +54,7 @@ def read_helper(fp):
 
     return params
 
-def cosmic_read_helper(fp, x_sun=0.0, y_sun=0.0, z_sun=0.0):
+def cosmic_read_helper(fp, x_sun=0.0, y_sun=0.0, z_sun=0.0, use_gr=False):
     data = np.asarray(ascii.read(fp))
     keys = data.dtype.names
 
@@ -68,15 +68,16 @@ def cosmic_read_helper(fp, x_sun=0.0, y_sun=0.0, z_sun=0.0):
     P0_sec = 2./params['f_gw[Hz]']
     params['period'] = P0_sec/(3600.0*24.0)
 
-    fdot_gw = params['f_dot_total [yr^(-2)]'] / ct.Julian_year**2
-    params['Pdot'] = -1./2. * fdot_gw*P0_sec**2
+    if use_gr is False:
+        fdot_gw = params['f_dot_total [yr^(-2)]'] / ct.Julian_year**2
+        params['Pdot'] = -1./2. * fdot_gw*P0_sec**2
 
     params['incl'] = np.ones_like(params['period']) * 100.0
     params['sbratio'] = np.ones_like(params['period']) * 0.5
     return params
 
 
-def test(input_dict):
+def test(input_dict, output_string):
     keys = list(input_dict.keys())
     num_lcs = len(input_dict[keys[0]])
     num_freqs = int(2**13)
@@ -125,9 +126,7 @@ def test(input_dict):
            exact_grav=False, verbose=1, plot_nopdot=True,savefig=False)"""
 
         lcs.append(np.array([t_obs, mag]).T)
-        if len(np.where(mag != 1.0)[0]) != 0:
-            print('CHECKER')
-        if lc_i % 10 == 0:
+        if lc_i % 25 == 0:
             print(lc_i)
         #check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
         #ce_checks.append(check)
@@ -138,21 +137,23 @@ def test(input_dict):
 
     st = time.perf_counter()
 
-    check = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, test_pdots, show_progress=True)
+    output = ce.batched_run_const_nfreq(lcs, batch_size, test_freqs, test_pdots, show_progress=True)
     et = time.perf_counter()
     print('Time per frequency per pdot per light curve:', (et - st)/(num_lcs*num_freqs*num_pdots))
     print('Total time for {} light curves and {} frequencies and {} pdots:'.format(num_lcs, num_freqs, num_pdots), et - st)
     #checker = actual_freqs/test_freqs[np.argmin(check, axis=1)]
 
+    np.save(output_string, output)
+    print('Read out data to {}.npy'.format(output_string))
     #sig = (np.min(check, axis=1) - np.mean(check, axis=1))/np.std(check, axis=1)
 
     #print('num > 10:', len(np.where(sig<-10.0)[0])/num_lcs)
 
-    import pdb; pdb.set_trace()
+
 
 
 if __name__ == "__main__":
     #input_dict = read_helper('test_params.txt')
-    input_dict = cosmic_read_helper('gx_save_lambda_var_alpha_025.csv', x_sun=0.0, y_sun=0.0, z_sun=0.0)
+    input_dict = cosmic_read_helper('gx_save_lambda_var_alpha_025.csv', x_sun=0.0, y_sun=0.0, z_sun=0.0, use_gr=False)
     print('Read data complete.')
-    test(input_dict)
+    test(input_dict, 'gce_output')

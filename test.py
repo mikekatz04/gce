@@ -47,6 +47,6 @@ def test(input_dict, output_string):
 
 if __name__ == "__main__":
     #input_dict = read_helper('test_params.txt')
-    input_dict = cosmic_read_helper('gx_save_lambda_var_alpha_025.csv', x_sun=0.0, y_sun=0.0, z_sun=0.0, use_gr=False)
+    input_dict = cosmic_read_helper('input/gx_save_lambda_var_alpha_025.csv', x_sun=0.0, y_sun=0.0, z_sun=0.0, use_gr=False)
     print('Read data complete.')
     test(input_dict, 'gce_output_small')

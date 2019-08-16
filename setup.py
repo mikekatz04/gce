@@ -160,8 +160,8 @@ def wrapper_install():
           # Random metadata. there's more you can supply
           author = 'Michael Katz',
           version = '0.1',
-          packages=['gcex'],
-           py_modules=['gcex.gce'],
+          packages=['gcex', 'gcex.utils'],
+           py_modules=['gcex.gce', 'gcex.uitls.getlcs', 'gcex.uitls.io', 'gcex.uitls.suppliment'],
 
           # Since the package has c code, the egg cannot be zipped
           zip_safe = False)

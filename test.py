@@ -62,19 +62,17 @@ def cosmic_read_helper(fp, x_sun=0.0, y_sun=0.0, z_sun=0.0):
     params['m1'] = m1 = params['m1 [msun]']
     params['m2'] = m2 = params['m2[msun]']
     params['q'] = q = m1/m2 * (m1 >= m2) + m2/m1 * (m1 < m2)
+    params['m_tot'] = m1 + m2
 
     params['d'] = 1e3*((params['xGx[kpc]'] - x_sun)**2 + (params['yGx[kpc]'] - y_sun)**2 + (params['zGx[kpc]'] - z_sun)**2)**(1/2)
     P0_sec = 2./params['f_gw[Hz]']
     params['period'] = P0_sec/(3600.0*24.0)
-    params['a'] = a = (P0_sec**2/(4*ct.pi**2) * ct.G * (m1 + m2)*M_sun)**(1/3) / 695700e3  # solar radii
 
-    params['radius_1'] = 1.5e-2*(0.5/m1)  # 4.168e-3 * (1/m1)**(1/3) / a
-    params['radius_2'] = 1.5e-2*(0.5/m2)  # 4.168e-3 * (1/m2)**(1/3) / a
     fdot_gw = params['f_dot_total [yr^(-2)]'] / ct.Julian_year**2
     params['Pdot'] = -1./2. * fdot_gw*P0_sec**2
 
-    params['incl'] = np.ones_like(params['Pdot']) * 100.0
-    params['sbratio'] = np.ones_like(params['Pdot']) * 0.5
+    params['incl'] = np.ones_like(params['period']) * 100.0
+    params['sbratio'] = np.ones_like(params['period']) * 0.5
     return params
 
 
@@ -133,7 +131,7 @@ def test(input_dict):
             print(lc_i)
         #check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
         #ce_checks.append(check)
-    import pdb; pdb.set_trace()
+
     #pyce_checks = np.asarray(ce_checks)
     ce = ConditionalEntropy()
     batch_size = 200

@@ -18,7 +18,7 @@ def read_out_to_hdf5(output_string, input_dict, output, test_freqs, test_pdots):
 def read_in_from_hdf5(input_string):
     with h5py.File(input_string + '.hdf5', 'r') as f:
         keys = list(f)
-        ce_val_dict = {f[key][:] for key in keys}
+        ce_val_dict = {key: f[key][:] for key in keys}
     print('Read in data from {}.hdf5'.format(input_string))
     print('Keys are', keys)
     return ce_val_dict

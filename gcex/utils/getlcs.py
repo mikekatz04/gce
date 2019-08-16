@@ -2,7 +2,7 @@ import numpy as np
 
 from ztfperiodic import simulate
 
-def get_lcs(input_dict, min_pts=95, max_pts=105):
+def get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25):
     keys = list(input_dict.keys())
     num_lcs = len(input_dict[keys[0]])
 
@@ -36,8 +36,9 @@ def get_lcs(input_dict, min_pts=95, max_pts=105):
            exact_grav=False, verbose=1, plot_nopdot=True,savefig=False)"""
 
         lcs.append(np.array([t_obs, mag]).T)
-        if lc_i % 25 == 0:
-            print(lc_i)
+        if verbose:
+            if lc_i % verbose == 0:
+                print(lc_i)
         #check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
         #ce_checks.append(check)
     return lcs

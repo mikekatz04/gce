@@ -17,7 +17,7 @@ class ConditionalEntropy:
         prop_defaults = {
             'use_double': False,  # not implemented yet
             'phase_bins': 15,
-            'mag_bins': 10
+            'mag_bins': 10  # overlap 50 %
         }
 
         for prop, default in prop_defaults.items():
@@ -29,6 +29,15 @@ class ConditionalEntropy:
         """
         lightcurves should be list of light curves (number of lcs, number of points for lc, 2) 2-> time, mag
         """
+
+        # setup mag bins
+        bin_start = 0.0
+        bin_end = 2.0/(self.mag_bins+1)
+        dbin = 1.0/(self.mag_bins+1)
+        mag_bin_template = np.zeros(self.mag_bins*2)
+        for i in range(self.mag_bins):
+            mag_bin_template[2*i] = bin_start + i*dbin
+            mag_bin_template[2*i+1] = bin_end + i*dbin
 
         split_inds = []
         i = 0
@@ -62,21 +71,36 @@ class ConditionalEntropy:
 
             light_curve_times = light_curve_arr[:, :, 0]
             min_light_curve_times = light_curve_times[:, 0]
-            
-            light_curve_mags = light_curve_arr[:, :, 1]
 
-            light_curve_mag_bin_edges = np.asarray([np.linspace(min_val*0.999, max_val*1.001, self.mag_bins+1) for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max)])
+            light_curve_mags = light_curve_arr[:, :, 1]
+            light_curve_mags_inds = np.ones(light_curve_mags.shape+ (2,)).astype(int)*-1
+
+            light_curve_mag_bin_edges = np.asarray([min_val*0.999 + (max_val*1.001 - min_val*0.999)*mag_bin_template
+                                                    for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max)]).reshape(-1, self.mag_bins, 2)
+
+            # figure out index of mag bin (can put on gpu for speed up)
+            for lc_i, lc_mag in enumerate(light_curve_mags):
+                for kk in range(number_of_pts[lc_i]):
+                    mag = lc_mag[kk]
+                    num_bin = 0
+                    k = 0
+                    while(num_bin < 2 and k < self.mag_bins):
+                        bin_min, bin_max = light_curve_mag_bin_edges[lc_i, k]
+                        if mag >= bin_min and mag < bin_max:
+                            light_curve_mags_inds[lc_i, kk, num_bin] = k
+                            num_bin += 1
+                        k += 1
 
             # flatten everything
             light_curve_times = light_curve_times.flatten()
             light_curve_mags = light_curve_mags.flatten()
             light_curve_mag_bin_edges = light_curve_mag_bin_edges.flatten()
+            light_curve_mags_inds = light_curve_mags_inds.flatten()
 
             #et = time.perf_counter()
             #print('python time:', (et - st))
             ce_vals_out.append( self.gce.conditional_entropy(light_curve_times.astype(np.float64),
-                                                   light_curve_mags.astype(np.float64),
-                                                   light_curve_mag_bin_edges.astype(np.float64),
+                                                   light_curve_mags_inds.astype(np.int32),
                                                    number_of_pts.astype(np.int32),
                                                    freqs.astype(np.float64),
                                                    pdots.astype(np.float64),

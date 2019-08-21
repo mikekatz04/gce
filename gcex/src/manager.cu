@@ -31,13 +31,19 @@ GCE::GCE (int phase_bins_, int mag_bins_){
     phase_bins = phase_bins_;
     mag_bins = mag_bins_;
 
-    phase_bin_edges = new fod[phase_bins + 1];
-    cudaMalloc(&d_phase_bin_edges, (phase_bins + 1)*sizeof(fod));
+    phase_bin_edges = new fod[2*phase_bins];
+    cudaMalloc(&d_phase_bin_edges, (2*phase_bins)*sizeof(fod));
 
-    for (int i=0; i< (phase_bins + 1); i++) phase_bin_edges[i] = ((fod) i)/((fod) phase_bins);
-    phase_bin_edges[phase_bins] = 1.000001;
+    fod bin_start = 0.0;
+    fod bin_end = 2./((fod) phase_bins + 1);
+    fod dbin = 1./((fod) phase_bins + 1);
+    for (int i=0; i<(phase_bins); i+=1){
+        phase_bin_edges[2*i] = bin_start + dbin*i;
+        phase_bin_edges[2*i+1] = bin_end + dbin*i;
+    }
+    phase_bin_edges[2*phase_bins-1] = 1.000001;
     phase_bin_edges[0] = -0.000001;
-    cudaMemcpy(d_phase_bin_edges, phase_bin_edges, (phase_bins + 1)*sizeof(fod), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_phase_bin_edges, phase_bin_edges, (2*phase_bins)*sizeof(fod), cudaMemcpyHostToDevice);
 }
 
 
@@ -53,8 +59,8 @@ void GCE::conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, fod *m
     gpuErrchk(cudaMemcpy(d_time_vals, time_vals, num_lcs*num_pts_max*sizeof(fod), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_mag_vals, mag_vals, num_lcs*num_pts_max*sizeof(fod), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&d_mag_bin_edges, num_lcs*(mag_bins+1)*sizeof(fod)));
-    gpuErrchk(cudaMemcpy(d_mag_bin_edges, mag_bin_edges, num_lcs*(mag_bins+1)*sizeof(fod), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&d_mag_bin_edges, num_lcs*(2*mag_bins)*sizeof(fod)));
+    gpuErrchk(cudaMemcpy(d_mag_bin_edges, mag_bin_edges, num_lcs*(2*mag_bins)*sizeof(fod), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&d_freqs, num_freqs*sizeof(fod)));
     gpuErrchk(cudaMemcpy(d_freqs, freqs, num_freqs*sizeof(fod), cudaMemcpyHostToDevice));
@@ -73,7 +79,6 @@ void GCE::conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, fod *m
 
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
     dim3 griddim(num_lcs, nblocks, num_pdots);
-
     kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_phase_bin_edges, d_mag_bin_edges, d_time_vals, d_mag_vals, d_num_pts_arr, num_pts_max, mag_bins, phase_bins, num_lcs, d_min_light_curve_times);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());

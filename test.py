@@ -26,13 +26,13 @@ def test(input_dict, output_string):
     max_freq = 1./min_period
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
 
-    input_dict = {key: input_dict[key] for key in input_dict}
+    input_dict = {key: input_dict[key][0:100] for key in input_dict}
     lcs = get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25, mean_dt=3, sig_t=2)
 
     num_lcs = len(lcs)
 
     #pyce_checks = np.asarray(ce_checks)
-    ce = ConditionalEntropy()
+    ce = ConditionalEntropy(phase_bins=50)
     batch_size = 200
 
     st = time.perf_counter()

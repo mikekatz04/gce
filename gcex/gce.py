@@ -24,6 +24,7 @@ class ConditionalEntropy:
             setattr(self, prop, kwargs.get(prop, default))
 
         self.gce = GCE(self.phase_bins, self.mag_bins)
+        print('\nGCE initialized with {} phase bins and {} mag bins.'.format(self.phase_bins, self.mag_bins), '\n')
 
     def batched_run_const_nfreq(self, lightcurves, batch_size, freqs, pdots, show_progress=True):
         """

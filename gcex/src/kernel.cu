@@ -22,6 +22,11 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges, int* mag_bin_i
 
     for (int j=0; j<phase_bins; j++){
         current_phase_prob = 0;
+        /*# if __CUDA_ARCH__>=200
+        if ((offset == 0)  && (lc_i == 0)){
+            printf("(%d %d %d): %lf - %lf\n", lc_i, j, offset, phase_bin_edges[2*j], phase_bin_edges[2*j+1]);
+        }
+        #endif //*/
         for (int k=0; k<npoints; k++){
             t_val = time_vals[k] - lc_start_time;
 
@@ -86,7 +91,7 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int 
     // TODO: make this adjustable: https://devblogs.nvidia.com/using-shared-memory-cuda-cc/  !!!!
     int offset = mag_bins*threadIdx.x;
     __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
-    __shared__ fod share_bins_phase[15*2];
+    extern __shared__ fod share_bins_phase[];
     //__shared__ fod share_t_vals[100];
     //__shared__ fod share_magnitude[100];
 

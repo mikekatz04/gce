@@ -88,7 +88,7 @@ class ConditionalEntropy:
                 else:
                     max_val = max_val*1.001
 
-                light_curve_mag_bin_edges.append(min_val*0.999 + (max_val*1.001 - min_val*0.999)*mag_bin_template)
+                light_curve_mag_bin_edges.append(min_val + (max_val - min_val)*mag_bin_template)
 
             light_curve_mag_bin_edges = np.asarray(light_curve_mag_bin_edges).reshape(-1, self.mag_bins, 2)
 

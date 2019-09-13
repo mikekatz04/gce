@@ -76,8 +76,21 @@ class ConditionalEntropy:
             light_curve_mags = light_curve_arr[:, :, 1]
             light_curve_mags_inds = np.ones(light_curve_mags.shape+ (2,)).astype(int)*-1
 
-            light_curve_mag_bin_edges = np.asarray([min_val*0.999 + (max_val*1.001 - min_val*0.999)*mag_bin_template
-                                                    for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max)]).reshape(-1, self.mag_bins, 2)
+            light_curve_mag_bin_edges = []
+            for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max):
+                if min_val < 0.0:
+                    min_val = min_val*1.001
+                else:
+                    min_val = min_val*0.999
+
+                if max_val < 0.0:
+                    max_val = max_val*0.999
+                else:
+                    max_val = max_val*1.001
+
+                light_curve_mag_bin_edges.append(min_val + (max_val - min_val)*mag_bin_template)
+
+            light_curve_mag_bin_edges = np.asarray(light_curve_mag_bin_edges).reshape(-1, self.mag_bins, 2)
 
             # figure out index of mag bin (can put on gpu for speed up)
             for lc_i, lc_mag in enumerate(light_curve_mags):

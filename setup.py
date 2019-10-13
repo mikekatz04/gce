@@ -126,6 +126,7 @@ def cuda_install():
                 'gcc': ['-std=c99'], # '-g'],
                 'nvcc': [
                     '-arch=sm_50',
+                    '-gencode=arch=compute_30,code=sm_30',
                     '-gencode=arch=compute_50,code=sm_50',
                     '-gencode=arch=compute_52,code=sm_52',
                     '-gencode=arch=compute_60,code=sm_60',

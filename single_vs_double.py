@@ -21,10 +21,24 @@ if not opts.type in ["single","double"]:
     print("Only single or double precision supported")
     exit(0)
 
+gcepyx = "gcex/GCE.pyx"
 gcecpp = "gcex/GCE.cpp"
 globalh = "gcex/src/global.h"
 gcepy = "gcex/gce.py"
 kernelcu = "gcex/src/kernel.cu"
+
+f = open(gcepyx,'r')
+filedata = f.read()
+f.close()
+
+if opts.type == "single":
+    newdata = filedata.replace("float64","float32")
+else:
+    newdata = filedata.replace("float32","float64")
+
+f = open(gcepyx,'w')
+f.write(newdata)
+f.close()
 
 f = open(gcecpp,'r')
 filedata = f.read()
@@ -70,9 +84,9 @@ filedata = f.read()
 f.close()
 
 if opts.type == "single":
-    newdata = filedata.replace("fmod","fmodf")
+    newdata = filedata.replace(" fmod("," fmodf(")
 else:
-    newdata = filedata.replace("fmodf","fmod")
+    newdata = filedata.replace(" fmodf("," fmod(")
 
 f = open(kernelcu,'w')
 f.write(newdata)

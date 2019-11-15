@@ -6,7 +6,7 @@ assert sizeof(int) == sizeof(np.int32_t)
 cdef extern from "src/manager.hh":
     cdef cppclass GCEWrap "GCE":
         GCEWrap(int, int)
-        void conditional_entropy(np.float64_t*, int, np.float64_t*, np.int32_t*, np.int32_t*, int, np.float64_t*, int, np.float64_t*, int, np.float64_t*)
+        void conditional_entropy(np.float32_t*, int, np.float32_t*, np.int32_t*, np.int32_t*, int, np.float32_t*, int, np.float32_t*, int, np.float32_t*)
 
 cdef class GCE:
     cdef GCEWrap* g
@@ -17,14 +17,14 @@ cdef class GCE:
         self.g = new GCEWrap(phase_bins, mag_bins)
 
     def conditional_entropy(self,
-                            np.ndarray[ndim=1, dtype=np.float64_t] time_vals,
+                            np.ndarray[ndim=1, dtype=np.float32_t] time_vals,
                             np.ndarray[ndim=1, dtype=np.int32_t] mag_bin_inds,
                             np.ndarray[ndim=1, dtype=np.int32_t] num_pts_arr,
-                            np.ndarray[ndim=1, dtype=np.float64_t] freqs,
-                            np.ndarray[ndim=1, dtype=np.float64_t] pdots,
-                            np.ndarray[ndim=1, dtype=np.float64_t] min_light_curve_times):
+                            np.ndarray[ndim=1, dtype=np.float32_t] freqs,
+                            np.ndarray[ndim=1, dtype=np.float32_t] pdots,
+                            np.ndarray[ndim=1, dtype=np.float32_t] min_light_curve_times):
 
-        cdef np.ndarray[ndim=1, dtype=np.float64_t] ce_vals = np.zeros((len(num_pts_arr)*len(freqs)*len(pdots),), dtype=np.float64)
+        cdef np.ndarray[ndim=1, dtype=np.float32_t] ce_vals = np.zeros((len(num_pts_arr)*len(freqs)*len(pdots),), dtype=np.float32)
 
         num_pts_max = np.max(num_pts_arr)
         num_lcs = len(num_pts_arr)

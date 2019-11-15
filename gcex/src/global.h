@@ -3,6 +3,6 @@
 
 #include <stdlib.h>
 
-typedef double fod;
+typedef float fod;
 
 #endif

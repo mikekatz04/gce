@@ -4,7 +4,10 @@
 
 #define NUM_THREADS 256
 
-__device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges, int* mag_bin_inds, fod* time_vals, int npoints, int mag_bins, int phase_bins, fod* mag_bin_vals, int offset, int lc_i, fod lc_start_time){
+__device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
+                   int* mag_bin_inds, fod* time_vals, int npoints,
+                   int mag_bins, int phase_bins, fod* mag_bin_vals,
+                   int offset, int lc_i, fod lc_start_time){
     fod period = 1./frequency;
     fod folded_val = 0.0;
     int mag_ind_1 = -1, mag_ind_2=-1;
@@ -30,7 +33,7 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges, int* mag_bin_i
         for (int k=0; k<npoints; k++){
             t_val = time_vals[k] - lc_start_time;
 
-            folded_val = fmod(t_val-0.5*pdot*frequency*(t_val*t_val), period)*frequency; // between 0 and 1
+            folded_val = fmodf(t_val-0.5*pdot*frequency*(t_val*t_val), period)*frequency; // between 0 and 1
             if (folded_val < 0) {
                 folded_val = 1 + folded_val;
             }
@@ -81,9 +84,19 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int 
     int i = blockIdx.y*blockDim.x + threadIdx.x;
     int lc_i = blockIdx.x;
     int pdot_i = blockIdx.z;
-    if (lc_i >= num_lcs) return;
-    if (i >= num_freqs) return;
-    if (pdot_i >= num_pdots) return;
+
+
+    for (int lc_i = blockIdx.x;
+         lc_i < num_lcs;
+         lc_i += gridDim.x) {
+
+   for (int pdot_i = blockIdx.z;
+        pdot_i < num_pdots;
+        pdot_i += gridDim.z) {
+
+    for (int i = blockIdx.y * blockDim.x + threadIdx.x;
+         i < num_freqs;
+         i += blockDim.x * gridDim.y) {
 
     int num_pts_this_lc = num_pts_arr[lc_i];
     fod lc_start_time = min_light_curve_times[lc_i];
@@ -115,6 +128,9 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int 
     __syncthreads();
 
     ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], share_bins_phase, &(mag_bin_inds[lc_i*num_pts_max*2]), &(time_vals[lc_i*num_pts_max]), num_pts_this_lc, mag_bins, phase_bins, share_mag_bin_vals, offset, lc_i, lc_start_time);
+  }
+}
+}
 }
 
 /*

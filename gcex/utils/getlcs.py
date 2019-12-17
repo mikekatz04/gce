@@ -2,12 +2,13 @@ import numpy as np
 
 from ztfperiodic import simulate
 
+
 def get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25, mean_dt=20, sig_t=10):
     keys = list(input_dict.keys())
     num_lcs = len(input_dict[keys[0]])
 
     lcs = []
-    #ce_checks = []
+    # ce_checks = []
     number_of_pts = np.random.random_integers(min_pts, max_pts, size=num_lcs)
     for lc_i, n in zip(np.arange(num_lcs), number_of_pts):
         # form dictionary
@@ -35,10 +36,10 @@ def get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25, mean_dt=20, sig_t=1
            spots_1=None, spots_2=None,
            exact_grav=False, verbose=1, plot_nopdot=True,savefig=False)"""
 
-        lcs.append(np.array([t_obs, mag]).T)
+        lcs.append(np.array([t_obs, mag, err]).T)
         if verbose:
             if lc_i % verbose == 0:
                 print(lc_i)
-        #check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
-        #ce_checks.append(check)
+        # check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
+        # ce_checks.append(check)
     return lcs

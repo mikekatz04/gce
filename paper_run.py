@@ -13,7 +13,7 @@ except ImportError:
 M_sun = 1.989e30
 
 
-def test(input_dict, output_string):
+def run_search(lcs, true_vals):
 
     num_pdots = int(2 ** 8)
     max_pdot = 1e-10
@@ -27,58 +27,24 @@ def test(input_dict, output_string):
     max_freq = 1.0 / min_period
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
 
-    input_dict = {key: input_dict[key][0:200] for key in input_dict}
-    lcs = get_lcs(input_dict, min_pts=95, max_pts=105, verbose=25, mean_dt=3, sig_t=2)
-
-    import pdb
-
-    pdb.set_trace()
     num_lcs = len(lcs)
 
     # pyce_checks = np.asarray(ce_checks)
     ce = ConditionalEntropy(phase_bins=50)
     batch_size = 200
 
-    num_pdots_for_timing = (2 ** np.arange(10)).astype(int)
-
-    total_time = []
-    time_per = []
-    for num_pdots in num_pdots_for_timing:
-        test_pdots = np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
-        st = time.perf_counter()
-
-        output = ce.batched_run_const_nfreq(
-            lcs, batch_size, test_freqs, test_pdots, show_progress=True
-        )
-        et = time.perf_counter()
-        print(
-            "Time per frequency per pdot per light curve:",
-            (et - st) / (num_lcs * num_freqs * num_pdots),
-        )
-        print(
-            "Total time for {} light curves and {} frequencies and {} pdots:".format(
-                num_lcs, num_freqs, num_pdots
-            ),
-            et - st,
-        )
-        total_time.append(et - st)
-        time_per.append((et - st) / (num_lcs * num_freqs * num_pdots))
-
-    np.save(
-        "pdot_check_timing_results_50_100",
-        np.array([num_pdots_for_timing, total_time, time_per]),
+    output = ce.batched_run_const_nfreq(
+        lcs, batch_size, test_freqs, test_pdots, show_progress=True
     )
+
+    import pdb
+
+    pdb.set_trace()
     # read_out_to_hdf5(output_string, input_dict, output, test_freqs, test_pdots)
 
 
 if __name__ == "__main__":
     # input_dict = read_helper('test_params.txt')
-    input_dict = cosmic_read_helper(
-        "input/gx_save_lambda_var_alpha_025.csv",
-        x_sun=0.0,
-        y_sun=0.0,
-        z_sun=0.0,
-        use_gr=False,
-    )
+    lcs, true_vals = read_in_for_paper("input/light_curves.pickle")
     print("Read data complete.")
-    test(input_dict, "gce_output_small_test")
+    run_search(lcs, true_vals)

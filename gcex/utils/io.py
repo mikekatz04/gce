@@ -85,7 +85,7 @@ def read_helper(fp):
 
 
 def gr_pdot(m1, m2, porb):
-    f_gw = 2 / porb
+    f_gw = 2 / (porb * 3600.0 * 24.0)
     m1 = m1 * Msun
     m2 = m2 * Msun
 
@@ -94,6 +94,7 @@ def gr_pdot(m1, m2, porb):
     P_dot_gw = -(96.0 * np.pi / (5 * ct.c ** 5)) * (ct.G * np.pi * M_c * f_gw) ** (
         5 / 3
     )
+
     return P_dot_gw
 
 
@@ -124,16 +125,10 @@ def cosmic_read_helper(
 
         params_trans = {key: np.asarray(data[key])[keep] for key in keys}
 
-        params_trans["name"] = [fsp + "_" + str(i) for i in np.arange(len(data))]
-
         params_trans["m1"] = m1 = params_trans.pop("mass_1")
         params_trans["m1"] = m2 = params_trans.pop("mass_2")
         params_trans["q"] = q = m1 / m2 * (m1 >= m2) + m2 / m1 * (m1 < m2)
         params_trans["m_tot"] = m1 + m2
-
-        import pdb
-
-        pdb.set_trace()
 
         params_trans["radius_1"] = params_trans.pop("rad_1")
         params_trans["radius_2"] = params_trans.pop("rad_2")
@@ -151,6 +146,16 @@ def cosmic_read_helper(
         params_trans["sbratio"] = np.ones_like(params_trans["period"]) * 0.5
 
         params_trans["Pdot"] = gr_pdot(m1, m2, porb)
+
+        keep = np.where(
+            (params_trans["radius_1"] >= 0.05) & (params_trans["radius_2"] >= 0.05)
+        )[0]
+
+        params_trans = {key: params_trans[key][keep] for key in params_trans}
+
+        params_trans["name"] = np.asarray(
+            [fsp + "_" + str(i) for i in np.arange(len(params_trans["radius_1"]))]
+        )
 
         if num == 0:
             params = params_trans
@@ -239,3 +244,16 @@ def LSST_read_in(folder, start=None, end=None):
 
     real_periods = np.load("LC/true_periods.npy")[start:end]
     return lcs_out, real_periods
+
+
+def read_in_for_paper(fp):
+    with open(fp, "rb") as f:
+        in_vals = pickle.load(f)
+
+    out_list = []
+    params = []
+    for temp in in_vals.values():
+        out_list.append(temp.get("lc"))
+        params.append(temp.get("params"))
+
+    return out_list, params

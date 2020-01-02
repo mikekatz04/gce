@@ -12,11 +12,6 @@ def parallel_func(
     name = input_dict["name"][lc_i]
     params = {key: input_dict[key][lc_i] for key in keys}
 
-    import pdb
-
-    pdb.set_trace()
-
-    params["incl"] = 89.5
     if params["incl"] <= limiting_inc or params["incl"] >= 180.0 - limiting_inc:
         return (None, None)
 
@@ -70,7 +65,7 @@ def get_lcs(
 
     out_dict = {}
     # ce_checks = []
-    number_of_pts = np.random.random_integers(min_pts, max_pts, size=num_lcs)[0:100]
+    number_of_pts = np.random.random_integers(min_pts, max_pts, size=num_lcs)
 
     args = [
         (input_dict, lc_i, n, mean_dt, sig_t, keys, limiting_inc, verbose, kwargs)
@@ -81,7 +76,7 @@ def get_lcs(
         num_procs = mp.cpu_count()
 
     # test
-    check = parallel_func(*args[0])
+    # check = parallel_func(*args[0])
     # import pdb; pdb.set_trace()
     """print(num_procs)
     with mp.Pool(num_procs) as pool:
@@ -89,15 +84,19 @@ def get_lcs(
         results = [res.get() for res in results]
     """
     results = [parallel_func(*arg) for arg in args]
-    import pdb
 
-    pdb.set_trace()
+    out_dict = {}
+    for lc_i, (name, lc) in enumerate(results):
+        if name is None:
+            continue
+        params = {key: input_dict[key][lc_i] for key in keys}
+        out_dict[name] = {"params": params, "lc": lc}
 
     if pickle_out:
         with open(file_name_out + ".pickle", "wb") as handle:
             pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    return lcs
+    return out_dict
 
 
 def get_lcs_test(

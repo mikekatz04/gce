@@ -4,6 +4,9 @@ import scipy.constants as ct
 from astropy.io import ascii
 import os
 import pickle
+import pandas as pd
+
+Msun = 1.989e30
 
 
 def read_out_to_hdf5(output_string, input_dict, output, test_freqs, test_pdots):
@@ -81,11 +84,92 @@ def read_helper(fp):
     return params
 
 
-def cosmic_read_helper(fp, x_sun=0.0, y_sun=0.0, z_sun=0.0, use_gr=False):
+def gr_pdot(m1, m2, porb):
+    f_gw = 2 / porb
+    m1 = m1 * Msun
+    m2 = m2 * Msun
+
+    M_c = (m1 * m2) ** (3 / 5) / (m1 + m2) ** (1 / 5)
+
+    P_dot_gw = -(96.0 * np.pi / (5 * ct.c ** 5)) * (ct.G * np.pi * M_c * f_gw) ** (
+        5 / 3
+    )
+    return P_dot_gw
+
+
+def cosmic_read_helper(
+    file_specifier_list,
+    file_ext_pref,
+    file_ext_suf,
+    x_sun=0.0,
+    y_sun=0.0,
+    z_sun=0.0,
+    use_gr=False,
+    limiting_inc=0.7,
+    limiting_period=100.0,
+):
+
+    params = {}
+    for num, fsp in enumerate(file_specifier_list):
+        fp = file_ext_pref + fsp + file_ext_suf
+        data = pd.read_hdf(fp)
+
+        keys = data.keys()
+
+        keep = np.where(
+            (data["inc"] * 180.0 / np.pi >= limiting_inc)
+            & (data["inc"] * 180.0 / np.pi <= 180.0 - limiting_inc)
+            & (data["porb"] < limiting_period)
+        )[0]
+
+        params_trans = {key: np.asarray(data[key])[keep] for key in keys}
+
+        params_trans["name"] = [fsp + "_" + str(i) for i in np.arange(len(data))]
+
+        params_trans["m1"] = m1 = params_trans.pop("mass_1")
+        params_trans["m1"] = m2 = params_trans.pop("mass_2")
+        params_trans["q"] = q = m1 / m2 * (m1 >= m2) + m2 / m1 * (m1 < m2)
+        params_trans["m_tot"] = m1 + m2
+
+        import pdb
+
+        pdb.set_trace()
+
+        params_trans["radius_1"] = params_trans.pop("rad_1")
+        params_trans["radius_2"] = params_trans.pop("rad_2")
+
+        params_trans["a"] = params_trans.pop("sep")
+
+        params_trans["radius_1"] = params_trans["radius_1"] / params_trans["a"]
+        params_trans["radius_2"] = params_trans["radius_2"] / params_trans["a"]
+
+        porb = params_trans["porb"]
+        params_trans["period"] = params_trans.pop("porb")
+
+        params_trans["incl"] = params_trans.pop("inc")
+        params_trans["incl"] = params_trans["incl"] * 180.0 / np.pi
+        params_trans["sbratio"] = np.ones_like(params_trans["period"]) * 0.5
+
+        params_trans["Pdot"] = gr_pdot(m1, m2, porb)
+
+        if num == 0:
+            params = params_trans
+
+        else:
+            params = {
+                key: np.concatenate([params[key], params_trans[key]])
+                for key in params_trans
+            }
+    return params
+
+
+def katie_cosmic_read_helper(fp, x_sun=0.0, y_sun=0.0, z_sun=0.0, use_gr=False):
     data = np.asarray(ascii.read(fp))
     keys = data.dtype.names
 
     params = {key: data[key] for key in keys}
+
+    params["name"] = [str(i) for i in np.arange(len(data))]
     params["m1"] = m1 = params["m1 [msun]"]
     params["m2"] = m2 = params["m2[msun]"]
     params["q"] = q = m1 / m2 * (m1 >= m2) + m2 / m1 * (m1 < m2)
@@ -105,6 +189,7 @@ def cosmic_read_helper(fp, x_sun=0.0, y_sun=0.0, z_sun=0.0, use_gr=False):
 
     params["incl"] = np.ones_like(params["period"]) * 100.0
     params["sbratio"] = np.ones_like(params["period"]) * 0.5
+
     return params
 
 

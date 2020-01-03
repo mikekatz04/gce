@@ -2,7 +2,12 @@ import numpy as np
 import pdb
 import time
 
-from gcex.utils.io import read_out_to_hdf5, cosmic_read_helper, read_helper
+from gcex.utils.io import (
+    read_out_to_hdf5,
+    cosmic_read_helper,
+    read_helper,
+    read_in_for_paper,
+)
 from gcex.utils.getlcs import get_lcs
 
 try:
@@ -31,7 +36,7 @@ def run_search(lcs, true_vals):
 
     # pyce_checks = np.asarray(ce_checks)
     ce = ConditionalEntropy(phase_bins=50)
-    batch_size = 200
+    batch_size = 20
 
     output = ce.batched_run_const_nfreq(
         lcs, batch_size, test_freqs, test_pdots, show_progress=True
@@ -45,6 +50,7 @@ def run_search(lcs, true_vals):
 
 if __name__ == "__main__":
     # input_dict = read_helper('test_params.txt')
-    lcs, true_vals = read_in_for_paper("input/light_curves.pickle")
+    lcs, true_vals = read_in_for_paper("input/light_curves.pickle", true_mag=True)
+
     print("Read data complete.")
     run_search(lcs, true_vals)

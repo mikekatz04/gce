@@ -17,7 +17,9 @@ def parallel_func(
 
     t_obs = simulate.time(n=n, mean_dt=mean_dt, sig_t=sig_t)
 
-    mag, phase, err = simulate.pdot_lc(t_obs, plot_nopdot=None, **{**params, **kwargs})
+    mag, phase, err = simulate.pdot_lc(
+        t_obs, plot_nopdot=None, absmag=True, **{**params, **kwargs}
+    )
     """mag=None, absmag=True, d=None, Pdot=Pdot, radius_1=r1/a, radius_2=r2/a, sbratio=sbratio, incl=i,
        light_3 = 0, t_zero = 0, period = P0, a = a, q = m1/m2,
        f_c = None, f_s = None,
@@ -42,7 +44,7 @@ def parallel_func(
             print(lc_i)
     # check = py_check_ce(test_freqs, time_vals, mags, mag_bins=10, phase_bins=15, verbose=verbose)
     # ce_checks.append(check)
-    if np.all(mag == 1.0):
+    if np.all(mag == mag[0]):
         return (None, None)
     return (name, np.array([t_obs, mag, err]))
 
@@ -90,7 +92,18 @@ def get_lcs(
         if name is None:
             continue
         params = {key: input_dict[key][lc_i] for key in keys}
-        out_dict[name] = {"params": params, "lc": lc}
+        t = lc[0]
+        mag = lc[1]
+        err = lc[2]
+
+        new_mag = np.random.normal(mag, err)
+        out_dict[name] = {
+            "params": params,
+            "t": t,
+            "mag": mag,
+            "err": err,
+            "true_mag": new_mag,
+        }
 
     if pickle_out:
         with open(file_name_out + ".pickle", "wb") as handle:
@@ -107,7 +120,7 @@ def get_lcs_test(
 
     lcs = []
     # ce_checks = []
-    number_of_pts = np.random.random_integers(min_pts, max_pts, size=num_lcs)
+    number_of_pts = np.random.random_integers(min_pts, max_pts, size=num_lcs)[0:10]
     for lc_i, n in zip(np.arange(num_lcs), number_of_pts):
         # form dictionary
         params = {key: input_dict[key][lc_i] for key in keys}
@@ -115,7 +128,7 @@ def get_lcs_test(
         t_obs = simulate.time(n=n, mean_dt=mean_dt, sig_t=sig_t)
 
         mag, phase, err = simulate.pdot_lc(
-            t_obs, plot_nopdot=None, **{**params, **kwargs}
+            t_obs, plot_nopdot=None, mag=True, **{**params, **kwargs}
         )
         """mag=None, absmag=True, d=None, Pdot=Pdot, radius_1=r1/a, radius_2=r2/a, sbratio=sbratio, incl=i,
            light_3 = 0, t_zero = 0, period = P0, a = a, q = m1/m2,

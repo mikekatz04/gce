@@ -147,6 +147,8 @@ def cosmic_read_helper(
 
         params_trans["Pdot"] = gr_pdot(m1, m2, porb)
 
+        params_trans["mag"] = params_trans.pop("m")
+
         keep = np.where(
             (params_trans["radius_1"] >= 0.05) & (params_trans["radius_2"] >= 0.05)
         )[0]
@@ -246,14 +248,20 @@ def LSST_read_in(folder, start=None, end=None):
     return lcs_out, real_periods
 
 
-def read_in_for_paper(fp):
+def read_in_for_paper(fp, true_mag=True):
     with open(fp, "rb") as f:
         in_vals = pickle.load(f)
 
     out_list = []
     params = []
     for temp in in_vals.values():
-        out_list.append(temp.get("lc"))
+        t = temp.get("t")
+        if true_mag:
+            mag = temp.get("true_mag")
+        else:
+            mag = temp.get("mag")
+
+        out_list.append(np.array([t, mag, mag]).T)
         params.append(temp.get("params"))
 
     return out_list, params

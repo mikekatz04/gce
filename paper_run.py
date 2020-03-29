@@ -1,8 +1,9 @@
 import numpy as np
 import pdb
 import time
+import pickle
 
-from gcex.utils.io import (
+from gcex.utils.input_output import (
     read_out_to_hdf5,
     cosmic_read_helper,
     read_helper,
@@ -20,37 +21,62 @@ M_sun = 1.989e30
 
 def run_search(lcs, true_vals):
 
-    num_pdots = int(2 ** 8)
-    max_pdot = 1e-10
-    min_pdot = 1e-12
-    test_pdots = np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
+    num_pdots = int(2 ** 7)
+    min_pdot = 1e-14
+    max_pdot = 1e-11
+    test_pdots = -1 * np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
 
-    num_freqs = int(2 ** 13)
-    min_period = 3 / (24 * 60.0)  # 3 minutes
-    max_period = 50.0  # 50 days
-    min_freq = 1.0 / max_period
-    max_freq = 1.0 / min_period
-    test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
+    # test_pdots = np.array([0.0])
+
+    baseline = 1200.0
+    if baseline < 10:
+        fmin, fmax = 18, 1440
+    else:
+        fmin, fmax = 2 / baseline, 480
+        # fmin, fmax = 1.0, 1e3
+
+    samples_per_peak = 1
+
+    df = 1.0 / (samples_per_peak * baseline)
+    nf = int(np.ceil((fmax - fmin) / df))
+    test_freqs = fmin + df * np.arange(nf)
 
     num_lcs = len(lcs)
 
     # pyce_checks = np.asarray(ce_checks)
     ce = ConditionalEntropy(phase_bins=50)
-    batch_size = 20
+    batch_size = 1
 
-    output = ce.batched_run_const_nfreq(
-        lcs, batch_size, test_freqs, test_pdots, show_progress=True
-    )
+    out = {}
+    out["df"] = df
+    out["test_freqs"] = test_freqs
+    out["test_pdots"] = test_pdots
+    out["nf"] = nf
+    out["res"] = []
+    out["truth"] = true_vals
 
-    import pdb
+    for i in range(len(lcs)):
+        temp = {}
+        output = ce.batched_run_const_nfreq(
+            lcs[i : i + 1], batch_size, test_freqs, test_pdots, show_progress=True
+        )
+        ch = output[0]
+        sig = (np.min(ch) - np.mean(ch)) / np.std(ch)
+        inds_best = np.where(ch == ch.min())
+        temp["sig"] = sig
+        temp["inds_best"] = inds_best
+        out["res"].append(temp)
 
-    pdb.set_trace()
+    with open(
+        "/projects/b1095/mkatz/gce/check_data_cosmic_pdot.pickle", "wb"
+    ) as handle:
+        pickle.dump(out, handle, protocol=pickle.HIGHEST_PROTOCOL)
     # read_out_to_hdf5(output_string, input_dict, output, test_freqs, test_pdots)
 
 
 if __name__ == "__main__":
     # input_dict = read_helper('test_params.txt')
-    lcs, true_vals = read_in_for_paper("input/light_curves.pickle", true_mag=True)
+    lcs, true_vals = read_in_for_paper("gce/input/light_curves.pickle", true_mag=True)
 
     print("Read data complete.")
     run_search(lcs, true_vals)

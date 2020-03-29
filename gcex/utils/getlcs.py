@@ -80,12 +80,12 @@ def get_lcs(
     # test
     # check = parallel_func(*args[0])
     # import pdb; pdb.set_trace()
-    """print(num_procs)
+    print(num_procs)
     with mp.Pool(num_procs) as pool:
         results = [pool.apply_async(parallel_func, arg) for arg in args]
         results = [res.get() for res in results]
-    """
-    results = [parallel_func(*arg) for arg in args]
+
+    # results = [parallel_func(*arg) for arg in args]
 
     out_dict = {}
     for lc_i, (name, lc) in enumerate(results):
@@ -120,7 +120,7 @@ def get_lcs_test(
 
     lcs = []
     # ce_checks = []
-    number_of_pts = np.random.random_integers(min_pts, max_pts, size=num_lcs)[0:10]
+    number_of_pts = np.random.random_integers(min_pts, max_pts, size=num_lcs)
     for lc_i, n in zip(np.arange(num_lcs), number_of_pts):
         # form dictionary
         params = {key: input_dict[key][lc_i] for key in keys}
@@ -128,7 +128,7 @@ def get_lcs_test(
         t_obs = simulate.time(n=n, mean_dt=mean_dt, sig_t=sig_t)
 
         mag, phase, err = simulate.pdot_lc(
-            t_obs, plot_nopdot=None, mag=True, **{**params, **kwargs}
+            t_obs, plot_nopdot=None, absmag=True, **{**params, **kwargs}
         )
         """mag=None, absmag=True, d=None, Pdot=Pdot, radius_1=r1/a, radius_2=r2/a, sbratio=sbratio, incl=i,
            light_3 = 0, t_zero = 0, period = P0, a = a, q = m1/m2,

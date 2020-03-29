@@ -1,6 +1,6 @@
 import numpy as np
 from gcex.utils.getlcs import get_lcs
-from gcex.utils.io import cosmic_read_helper
+from gcex.utils.input_output import cosmic_read_helper
 import pdb
 import matplotlib.pyplot as plt
 
@@ -12,7 +12,9 @@ input_dict = cosmic_read_helper(
     y_sun=0.0,
     z_sun=0.0,
     use_gr=True,
-    limiting_inc=70.0,
+    limiting_inc=0.0,
+    limiting_period=1 / 24.0,
+    limiting_magnitude=22.0,
 )
 
 """plt.loglog(input_dict["radius_1"], input_dict["radius_2"], ".")
@@ -31,11 +33,7 @@ lcs = get_lcs(
     mean_dt=3,
     sig_t=2,
     pickle_out=True,
-    file_name_out="input/light_curves",
-    limiting_inc=70.0,  # degrees
+    file_name_out="/projects/b1095/mkatz/gce/light_curves_more",
+    limiting_inc=0.0,  # degrees
     num_procs=None,
 )
-
-import pdb
-
-pdb.set_trace()

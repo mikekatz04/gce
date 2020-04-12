@@ -73,7 +73,7 @@ class ConditionalEntropy:
                 light_curve_mag_max[j] = np.max(lc[:, 1])
                 light_curve_mag_min[j] = np.min(lc[:, 1])
             light_curve_arr = np.zeros(
-                (len(light_curve_split), max_length, light_curve_split.shape[-1])
+                (len(light_curve_split), max_length, light_curve_split.shape[-1]+1)
             )
 
             for j, lc in enumerate(light_curve_split):

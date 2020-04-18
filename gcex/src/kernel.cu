@@ -14,7 +14,8 @@ fod mod_func(fod x, fod y)
 __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
                    int* mag_bin_inds, fod* time_vals, int npoints,
                    int mag_bins, int phase_bins, fod* mag_bin_vals,
-                   int offset, int lc_i, fod lc_start_time){
+                   int offset, int lc_i, fod lc_start_time,
+                   fod * bin_counter){
     fod period = 1./frequency;
     fod folded_val = 0.0;
     int mag_ind_1 = -1, mag_ind_2=-1;
@@ -23,17 +24,21 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
     fod t_val = 0.0;
     fod total_points = 0.0;
 
-    for (int i=0; i<mag_bins; i++){
-        mag_bin_vals[i] = 0;
-    }
+    fod current_phase_prob[50];
 
-    fod current_phase_prob = 0.0;
+    //for (int i=0; i<mag_bins; i++){
+    //    mag_bin_vals[i] = 0;
+    //}
+
+    //fod current_phase_prob = 0.0;
     int temp_mag_points = 0;
     short index=0;
 
+    fod half_dbins = 0.0161290318;
+
     int gap = 0;
-    for (int j=0; j<phase_bins; j++){
-        current_phase_prob = 0;
+    for (int k=0; k<npoints; k++){
+
         /*# if __CUDA_ARCH__>=200
         if ((offset == 0)  && (lc_i == 0)){
             printf("(%d %d %d): %lf - %lf\n", lc_i, j, offset, phase_bin_edges[2*j], phase_bin_edges[2*j+1]);
@@ -41,7 +46,7 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
         #endif //*/
         //int k = 0;
         //while(k < npoints - gap){
-        for (int k=0; k<npoints; k++){
+
             ///index = indicies[k];
             //if (index == -1) break;
 
@@ -51,25 +56,44 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
             //if (folded_val < 0) {
             //    folded_val = 1 + folded_val;
             //}
+            int j = (int) folded_val/half_dbins;
+            mag_ind_1 = mag_bin_inds[2*k];
+            //mag_bin_vals[mag_ind_1] += 1.0;
+            bin_counter[j*mag_bins + mag_ind_1] += 1.0;
+            current_phase_prob[j] += 1.0;
+            total_points += 1.0;
 
-            if ((folded_val >= phase_bin_edges[2*j]) && (folded_val < phase_bin_edges[2*j+1])){
-                mag_ind_1 = mag_bin_inds[2*k];
-                mag_bin_vals[mag_ind_1] += 1.0;
-                current_phase_prob += 1.0;
+            mag_ind_2 = mag_bin_inds[2*k + 1];
+            if (mag_ind_2 != -1){
+                //mag_bin_vals[mag_ind_2] += 1.0;
+                bin_counter[j*mag_bins + mag_ind_2] += 1.0;
+                current_phase_prob[j] += 1.0;
                 total_points += 1.0;
-                mag_ind_2 = mag_bin_inds[2*k + 1];
+            }
+
+            if ((j != 0) && (j != phase_bins - 1)){
+                j-=1;
+                //mag_bin_vals[mag_ind_1] += 1.0;
+                bin_counter[j*mag_bins + mag_ind_1] += 1.0;
+                current_phase_prob[j] += 1.0;
+                total_points += 1.0;
+
                 if (mag_ind_2 != -1){
-                    mag_bin_vals[mag_ind_2] += 1.0;
-                    current_phase_prob += 1.0;
+                    //mag_bin_vals[mag_ind_2] += 1.0;
+                    bin_counter[j*mag_bins + mag_ind_2] += 1.0;
+                    current_phase_prob[j] += 1.0;
                     total_points += 1.0;
                 }
+            }
+
+
                 //printf("%d, %lf, %lf\n", l, mag_bins[l-1], current_phase_prob);
 
             //        indicies[k] = indicies[(npoints - 1) - gap];
             //        gap += 1;
-            }
+            //}
             //else k++;
-        }
+        //}
         /*# if __CUDA_ARCH__>=200
         if ((offset == mag_bins*255)  && (lc_i == 0)){
             printf("(%d %d %d %.18e %e)\n", lc_i, j, offset, frequency, current_phase_prob);
@@ -80,13 +104,16 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
         }
         #endif //*/
 
-        for (int i=0; i<mag_bins; i++){
-            if ((current_phase_prob > 0.0) && (mag_bin_vals[i] > 0.0)){
-                //printf("%d, %lf\n", i,log(current_phase_prob/mag_bins[i]));
-                sum_ij += (mag_bin_vals[i])*log((current_phase_prob)/(mag_bin_vals[i]));
-            }
-            mag_bin_vals[i] = 0.0;
+    }
 
+    for (int j=0; j<phase_bins; j++){
+        if (current_phase_prob[j] == 0.0) continue;
+        fod curr_phase_p = current_phase_prob[j];
+        for (int i=0; i<mag_bins; i++){
+            if (bin_counter[j*mag_bins + i] > 0.0){
+                //printf("%d, %lf\n", i,log(current_phase_prob/mag_bins[i]));
+                sum_ij += (bin_counter[j*mag_bins + i])*log((curr_phase_p)/(bin_counter[j*mag_bins + i]));
+            }
         }
     }
     /*# if __CUDA_ARCH__>=200
@@ -101,6 +128,7 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
 __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int num_pdots, fod* phase_bin_edges, int* mag_bin_inds, fod* time_vals, int *num_pts_arr, int num_pts_max, const int mag_bins, int phase_bins, int num_lcs, fod* min_light_curve_times){
 
     fod share_mag_bin_vals[100];
+    fod bin_counter[50*10];
 
     // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
     extern __shared__ fod share_bins_phase[];
@@ -137,11 +165,6 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int 
          i < num_freqs;
          i += blockDim.x * gridDim.y) {
 
-        for (int ind=0; ind<num_pts_this_lc; ind+=1){
-             indicies[ind] = (short)ind;
-             ind_counts[ind] = 0;
-        }
-
     // TODO: make this adjustable: https://devblogs.nvidia.com/using-shared-memory-cuda-cc/  !!!!
     int offset = mag_bins*threadIdx.x;
 
@@ -163,7 +186,8 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots, int 
 
     ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], share_bins_phase, &mag_bin_inds[0],
                                                           &time_vals_share[0], num_pts_this_lc, mag_bins, phase_bins, &share_mag_bin_vals[0],
-                                                          offset, lc_i, lc_start_time);
+                                                          offset, lc_i, lc_start_time,
+                                                          &bin_counter[0]);
   }
 }
 }

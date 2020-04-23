@@ -72,12 +72,16 @@ class ConditionalEntropy:
                 max_length = max_length if len(lc) < max_length else len(lc)
                 light_curve_mag_max[j] = np.max(lc[:, 1])
                 light_curve_mag_min[j] = np.min(lc[:, 1])
-            light_curve_arr = np.zeros(
-                (len(light_curve_split), max_length, light_curve_split.shape[-1]+1)
-            )
-
-            for j, lc in enumerate(light_curve_split):
-                light_curve_arr[j, : len(lc)] = np.asarray(lc)
+            try:
+                light_curve_arr = np.zeros(
+                    (len(light_curve_split), max_length, light_curve_split.shape[-1]+1))
+                for j, lc in enumerate(light_curve_split):
+                    light_curve_arr[j, : len(lc)] = np.asarray(lc)
+            except:
+                light_curve_arr = np.zeros(
+                    (len(light_curve_split), max_length, light_curve_split.shape[-1]))
+                for j, lc in enumerate(light_curve_split):
+                    light_curve_arr[j, : len(lc)] = np.asarray(lc)
 
             light_curve_times = light_curve_arr[:, :, 0]
             min_light_curve_times = light_curve_times[:, 0]

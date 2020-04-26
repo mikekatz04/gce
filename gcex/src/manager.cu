@@ -15,7 +15,7 @@ This class will get translated into python via cython
 
 using namespace std;
 
-#define NUM_THREADS 256
+#define NUM_THREADS 64
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -40,10 +40,12 @@ GCE::GCE (int phase_bins_, int mag_bins_){
     for (int i=0; i<(phase_bins); i+=1){
         phase_bin_edges[2*i] = bin_start + dbin*i;
         phase_bin_edges[2*i+1] = bin_end + dbin*i;
-        //printf("%lf - %lf\n", phase_bin_edges[2*i], phase_bin_edges[2*i+1]);
+        //printf("%lf - %lf, %.10lf\n", phase_bin_edges[2*i], phase_bin_edges[2*i+1], dbin);
     }
     phase_bin_edges[2*phase_bins-1] = 1.000001;
     phase_bin_edges[0] = -0.000001;
+
+    half_dbins = dbin;
     cudaMemcpy(d_phase_bin_edges, phase_bin_edges, (2*phase_bins)*sizeof(fod), cudaMemcpyHostToDevice);
 }
 
@@ -76,8 +78,12 @@ void GCE::conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, int *m
 
 
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
-    dim3 griddim(num_lcs, nblocks, num_pdots);
-    kernel<<<griddim, NUM_THREADS, 2*phase_bins*sizeof(fod)>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_phase_bin_edges, d_mag_bin_inds, d_time_vals, d_num_pts_arr, num_pts_max, mag_bins, phase_bins, num_lcs, d_min_light_curve_times);
+    //printf("%d\n", nblocks, num_pdots, num_lcs);
+    dim3 griddim(nblocks, num_lcs, num_pdots);
+    kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
+                                     d_phase_bin_edges, d_mag_bin_inds, d_time_vals,
+                                     d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
+                                     num_lcs, d_min_light_curve_times, half_dbins);
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 

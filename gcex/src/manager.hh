@@ -14,6 +14,8 @@ class GCE {
   int num_freqs;
   int num_pdots;
 
+  fod half_dbins;
+
   fod *d_time_vals;
   int *d_mag_bin_inds;
   int *d_num_pts_arr;

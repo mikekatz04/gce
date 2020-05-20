@@ -171,7 +171,7 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
                        int num_pdots, fod* __restrict__ phase_bin_edges, int* __restrict__ mag_bin_inds,
                        fod* __restrict__ time_vals, int * __restrict__ num_pts_arr, int num_pts_max,
                        const int mag_bins, int phase_bins, int num_lcs,
-                       fod* __restrict__ min_light_curve_times, fod half_dbins, int lc_i){
+                       fod* __restrict__ min_light_curve_times, fod half_dbins){
 
 
     // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
@@ -190,9 +190,9 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
     __syncthreads();
 
 
-    /*for (int lc_i = blockIdx.y;
+    for (int lc_i = blockIdx.y;
          lc_i < num_lcs;
-         lc_i += gridDim.y) {*/
+         lc_i += gridDim.y) {
 
      int num_pts_this_lc = num_pts_arr[lc_i];
      fod lc_start_time = min_light_curve_times[lc_i];
@@ -239,7 +239,7 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
                                                           &temp_phase_prob[threadIdx.x*51], &overall_phase_prob[threadIdx.x*51], half_dbins);
   }
 }
-//}
+}
 }
 
 void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, fod *d_phase_bin_edges, int *d_mag_bin_inds, fod *d_time_vals,
@@ -247,24 +247,24 @@ void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_
 {
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
     //printf("%d\n", nblocks, num_pdots, num_lcs);
-    dim3 griddim(nblocks, 1, num_pdots);
+    dim3 griddim(nblocks, num_lcs, num_pdots);
 
-    cudaStream_t streams[num_lcs];
+    //cudaStream_t streams[num_lcs];
 
-    for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
-        cudaStreamCreate(&streams[lc_i]);
+    //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+        //cudaStreamCreate(&streams[lc_i]);
 
-        kernel<<<griddim, NUM_THREADS, 0, streams[lc_i]>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
+        kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
                                      d_phase_bin_edges, d_mag_bin_inds, d_time_vals,
                                      d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
-                                     num_lcs, d_min_light_curve_times, half_dbins, lc_i);
-    }
+                                     num_lcs, d_min_light_curve_times, half_dbins);
+    //}
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
 
-    for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
-            cudaStreamDestroy(streams[lc_i]);
+    //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+    //        cudaStreamDestroy(streams[lc_i]);
 
-        }
+    //    }
 
 }

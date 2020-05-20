@@ -79,13 +79,25 @@ void GCE::conditional_entropy(fod *ce_vals, int num_lcs_, fod *time_vals, int *m
 
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
     //printf("%d\n", nblocks, num_pdots, num_lcs);
-    dim3 griddim(nblocks, num_lcs, num_pdots);
-    kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
+    dim3 griddim(nblocks, 1, num_pdots);
+
+    cudaStream_t streams[num_lcs];
+
+    for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+        cudaStreamCreate(&streams[lc_i]);
+
+        kernel<<<griddim, NUM_THREADS, 0, streams[lc_i]>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
                                      d_phase_bin_edges, d_mag_bin_inds, d_time_vals,
                                      d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
-                                     num_lcs, d_min_light_curve_times, half_dbins);
+                                     num_lcs, d_min_light_curve_times, half_dbins, lc_i);
+    }
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
+
+    for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+            cudaStreamDestroy(streams[lc_i]);
+
+        }
 
     // transfer ce vals
     cudaMemcpy(ce_vals, d_ce_vals, num_pdots*num_freqs*num_lcs*sizeof(fod), cudaMemcpyDeviceToHost);

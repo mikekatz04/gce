@@ -27,8 +27,8 @@ int get_phase_bin(fod t_val, fod pdot, fod frequency, fod period, fod half_dbins
     return j;
 }
 
-__device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
-                   int* mag_bin_inds, fod* time_vals, int npoints,
+__device__ fod ce (fod frequency, fod pdot, fod* __restrict__ phase_bin_edges,
+                   int* __restrict__ mag_bin_inds, fod* __restrict__ time_vals, int npoints,
                    int mag_bins, int phase_bins,
                    int offset, int lc_i, fod lc_start_time,
                    fod * temp_phase_prob, fod *overall_phase_prob, fod half_dbins){
@@ -156,11 +156,11 @@ __device__ fod ce (fod frequency, fod pdot, fod* phase_bin_edges,
     //return 0.0;
 }
 
-__global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots,
-                       int num_pdots, fod* phase_bin_edges, int* mag_bin_inds,
-                       fod* time_vals, int *num_pts_arr, int num_pts_max,
+__global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int num_freqs, fod* __restrict__ pdots,
+                       int num_pdots, fod* __restrict__ phase_bin_edges, int* __restrict__ mag_bin_inds,
+                       fod* __restrict__ time_vals, int * __restrict__ num_pts_arr, int num_pts_max,
                        const int mag_bins, int phase_bins, int num_lcs,
-                       fod* min_light_curve_times, fod half_dbins){
+                       fod* __restrict__ min_light_curve_times, fod half_dbins, int lc_i){
 
 
     // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
@@ -178,9 +178,10 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots,
 
     __syncthreads();
 
-    for (int lc_i = blockIdx.y;
+
+    /*for (int lc_i = blockIdx.y;
          lc_i < num_lcs;
-         lc_i += gridDim.y) {
+         lc_i += gridDim.y) {*/
 
      int num_pts_this_lc = num_pts_arr[lc_i];
      fod lc_start_time = min_light_curve_times[lc_i];
@@ -225,7 +226,7 @@ __global__ void kernel(fod* ce_vals, fod* freqs, int num_freqs, fod* pdots,
                                                           &temp_phase_prob[threadIdx.x*51], &overall_phase_prob[threadIdx.x*51], half_dbins);
   }
 }
-}
+//}
 }
 
 /*

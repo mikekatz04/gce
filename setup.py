@@ -144,6 +144,7 @@ ext = Extension(
             "-c",
             "--compiler-options",
             "'-fPIC'",
+            "--use_fast_math",
         ],  # ,"-G", "-g"] # for debugging
     },
     include_dirs=[numpy_include, CUDA["include"], "gcex/src"],

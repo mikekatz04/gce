@@ -27,7 +27,7 @@ def test(input_dict, output_string):
     max_freq = 1.0 / min_period
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
 
-    input_dict = {key: input_dict[key][0:100] for key in input_dict}
+    input_dict = {key: input_dict[key][0:4] for key in input_dict}
     lcs = get_lcs_test(
         input_dict, min_pts=100, max_pts=107, verbose=25, mean_dt=7, sig_t=2
     )
@@ -41,8 +41,8 @@ def test(input_dict, output_string):
     ce = ConditionalEntropy(phase_bins=15)
     batch_size = 200
 
-    num_pdots_for_timing = (2 ** np.arange(12)).astype(int)
-
+    num_pdots_for_timing = (2 ** np.arange(11)).astype(int)
+    num_pdots_for_timing = np.array([2, 2, 2])
     total_time = []
     time_per = []
     for num_pdots in num_pdots_for_timing:
@@ -50,7 +50,7 @@ def test(input_dict, output_string):
         st = time.perf_counter()
 
         output = ce.batched_run_const_nfreq(
-            lcs, batch_size, test_freqs, test_pdots, show_progress=True
+            lcs, batch_size, len(test_pdots), test_freqs, test_pdots, show_progress=True
         )
         et = time.perf_counter()
         print(
@@ -66,10 +66,10 @@ def test(input_dict, output_string):
         total_time.append(et - st)
         time_per.append((et - st) / (num_lcs * num_freqs * num_pdots))
 
-    np.save(
-        "timing_results_2_50_100",
-        np.array([num_pdots_for_timing, total_time, time_per]),
-    )
+    # np.save(
+    #    "timing_results_2_50_100",
+    #    np.array([num_pdots_for_timing, total_time, time_per]),
+    # )
     # read_out_to_hdf5(output_string, input_dict, output, test_freqs, test_pdots)
 
 

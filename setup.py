@@ -117,7 +117,7 @@ except AttributeError:
 
 ext = Extension(
     "GCE",
-    sources=["gcex/src/manager.cu", "gcex/GCE.pyx"],
+    sources=["gcex/src/kernel.cu", "gcex/GCE.pyx"],
     library_dirs=[CUDA["lib64"]],
     libraries=["cudart", "cublas"],
     language="c++",
@@ -130,11 +130,11 @@ ext = Extension(
         "gcc": ["-std=c99"],  # '-g'],
         "nvcc": [
             "-arch=sm_50",
-            "-gencode=arch=compute_30,code=sm_30",
-            "-gencode=arch=compute_50,code=sm_50",
-            "-gencode=arch=compute_52,code=sm_52",
-            "-gencode=arch=compute_60,code=sm_60",
-            "-gencode=arch=compute_61,code=sm_61",
+            # "-gencode=arch=compute_30,code=sm_30",
+            # "-gencode=arch=compute_50,code=sm_50",
+            # "-gencode=arch=compute_52,code=sm_52",
+            # "-gencode=arch=compute_60,code=sm_60",
+            # "-gencode=arch=compute_61,code=sm_61",
             "-gencode=arch=compute_70,code=sm_70",
             #'-gencode=arch=compute_75,code=sm_75',
             #'-gencode=arch=compute_75,code=compute_75',

@@ -3,7 +3,14 @@ from scipy import constants as ct
 from tqdm import tqdm
 import time
 
-from GCE import GCE
+from GCE import run_gce_wrap
+
+try:
+    import cupy as xp
+
+except ImportError:
+    print("Need to install cupy.")
+    exit()
 
 import time
 
@@ -23,7 +30,26 @@ class ConditionalEntropy:
         for prop, default in prop_defaults.items():
             setattr(self, prop, kwargs.get(prop, default))
 
-        self.gce = GCE(self.phase_bins, self.mag_bins)
+        if self.use_double:
+            raise NotImplementedError
+
+        else:
+            self.dtype = xp.float32
+
+        self.phase_bin_edges = xp.zeros((2 * self.phase_bins,), dtype=self.dtype)
+
+        bin_start = 0.0
+        bin_end = 2.0 / (self.phase_bins + 1)
+        dbin = 1.0 / (self.phase_bins + 1)
+        for i in range(self.phase_bins):
+            self.phase_bin_edges[2 * i] = bin_start + dbin * i
+            self.phase_bin_edges[2 * i + 1] = bin_end + dbin * i
+
+        self.phase_bin_edges[-1] = 1.000001
+        self.phase_bin_edges[0] = -0.000001
+
+        self.half_dbins = dbin
+
         print(
             "\nGCE initialized with {} phase bins and {} mag bins.".format(
                 self.phase_bins, self.mag_bins
@@ -32,7 +58,14 @@ class ConditionalEntropy:
         )
 
     def batched_run_const_nfreq(
-        self, lightcurves, batch_size, freqs, pdots, show_progress=True
+        self,
+        lightcurves,
+        batch_size,
+        pdot_batch_size,
+        freqs,
+        pdots,
+        return_best_only=False,
+        show_progress=True,
     ):
         """
         lightcurves should be list of light curves (number of lcs, number of points for lc, 2) 2-> time, mag
@@ -132,22 +165,50 @@ class ConditionalEntropy:
                 number_of_pts[i] = num_pts_temp
 
             # flatten everything
-            light_curve_times = light_curve_times.flatten()
-            light_curve_mags = light_curve_mags.flatten()
-            light_curve_mag_bin_edges = light_curve_mag_bin_edges.flatten()
-            light_curve_mags_inds = light_curve_mags_inds.flatten()
-
-            # et = time.perf_counter()
-            # print('python time:', (et - st))
-            ce_vals_out.append(
-                self.gce.conditional_entropy(
-                    light_curve_times.astype(np.float32),
-                    light_curve_mags_inds.astype(np.int32),
-                    number_of_pts.astype(np.int32),
-                    freqs.astype(np.float32),
-                    pdots.astype(np.float32),
-                    min_light_curve_times.astype(np.float32),
-                )
+            light_curve_times_in = (
+                xp.asarray(light_curve_times).flatten().astype(self.dtype)
             )
+            light_curve_mags_in = xp.asarray(light_curve_mags.flatten()).astype(
+                self.dtype
+            )
+            light_curve_mag_bin_edges_in = xp.asarray(
+                light_curve_mag_bin_edges.flatten()
+            ).astype(self.dtype)
+
+            light_curve_mags_inds_in = xp.asarray(
+                light_curve_mags_inds.flatten()
+            ).astype(self.dtype)
+
+            number_of_pts_in = xp.asarray(number_of_pts).astype(xp.int32)
+
+            freqs_in = xp.asarray(freqs).astype(self.dtype)
+            pdots_in = xp.asarray(pdots).astype(self.dtype)
+            min_light_curve_times_in = xp.asarray(min_light_curve_times).astype(
+                self.dtype
+            )
+
+            ce_vals_out_temp = xp.zeros(
+                (len(freqs_in) * len(pdots_in) * len(light_curve_times),),
+                dtype=self.dtype,
+            )
+
+            run_gce_wrap(
+                ce_vals_out_temp,
+                freqs_in,
+                len(freqs_in),
+                pdots_in,
+                len(pdots_in),
+                self.phase_bin_edges,
+                light_curve_mags_inds_in,
+                light_curve_times_in,
+                number_of_pts_in,
+                number_of_pts_in.max().item(),
+                self.mag_bins,
+                self.phase_bins,
+                len(light_curve_times),
+                min_light_curve_times_in,
+                self.half_dbins,
+            )
+            ce_vals_out.append(ce_vals_out_temp.get())
 
         return np.concatenate(ce_vals_out, axis=0)

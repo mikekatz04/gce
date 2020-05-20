@@ -4,6 +4,16 @@
 
 #define NUM_THREADS 64
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 __device__
 double mod_func(double x, double y)
 {
@@ -14,6 +24,7 @@ double mod_func(double x, double y)
     return check;
 }
 
+
 __device__
 int get_phase_bin(fod t_val, fod pdot, fod frequency, fod period, fod half_dbins, int phase_bins){
     double folded_val = mod_func((double) t_val-0.5*pdot*frequency*(t_val*t_val), (double)period)*((double)frequency); // between 0 and 1
@@ -21,8 +32,8 @@ int get_phase_bin(fod t_val, fod pdot, fod frequency, fod period, fod half_dbins
 
     int j = (int) abs((folded_val/(double)half_dbins));
     //printf("1: %d %d %lf %lf\n", j, phase_bins, folded_val, half_dbins);
-    if ((j<0)) j = 0;
-    else if (j>phase_bins)  j = phase_bins;
+    j = j % phase_bins;
+    //else if (j>phase_bins)  j = phase_bins;
     //printf("2: %d %d %lf %lf\n", j, phase_bins, folded_val, half_dbins);
     return j;
 }
@@ -151,7 +162,7 @@ __device__ fod ce (fod frequency, fod pdot, fod* __restrict__ phase_bin_edges,
         printf("(%d %d %.18e CE: %.18e)\n", lc_i, offset, frequency, sum_ij);
     }
     #endif //*/
-    //printf("%lf %lf\n", sum_ij, total_points);
+    //if (lc_i == 1) printf("%lf %lf %d\n", sum_ij, total_points, npoints);
     return  sum_ij/((fod) total_points);
     //return 0.0;
 }
@@ -185,6 +196,8 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
 
      int num_pts_this_lc = num_pts_arr[lc_i];
      fod lc_start_time = min_light_curve_times[lc_i];
+
+     //printf("%d\n", num_pts_this_lc);
 
      for (int j=threadIdx.x; j<num_pts_this_lc; j+=blockDim.x){
          time_vals_share[j] = time_vals[lc_i*num_pts_max + j];
@@ -229,103 +242,29 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
 //}
 }
 
-/*
-int main(){
-
-    int npoints=100;
-    int phase_bins=15;
-    int mag_bins=10;
-    int num_freqs= 1 << 13;
-    fod divisor = ((fod) num_freqs)/2.0;
-    int num_lcs = (int) 1000000;
-
-    fod* freqs = new fod[num_freqs];
-    fod* ce_vals = new fod[num_freqs];
-
-    fod *d_freqs, *d_ce_vals;
-
-    cudaMalloc(&d_freqs, sizeof(fod)*num_freqs);
-    cudaMalloc(&d_ce_vals, sizeof(fod)*num_freqs);
-
-    for (int i=0; i<num_freqs; i++){
-        freqs[i] = (i+1)*1./12./divisor;
-    }
-
-    cudaMemcpy(d_freqs, freqs, num_freqs*sizeof(fod), cudaMemcpyHostToDevice);
-
-    fod* bins_mag = new fod[mag_bins + 1];
-    fod* bins_phase = new fod[phase_bins + 1];
-    fod *d_bins_mag, *d_bins_phase;
-
-    cudaMalloc(&d_bins_mag, sizeof(fod)*(mag_bins + 1));
-    cudaMalloc(&d_bins_phase, sizeof(fod)*(phase_bins + 1));
-
-    fod* time_vals = new fod[npoints*num_lcs];
-    fod* mag_vals = new fod[npoints*num_lcs];
-    fod *d_t_vals, *d_magnitude;
-
-    cudaMalloc(&d_t_vals, sizeof(fod)*npoints*num_lcs);
-    cudaMalloc(&d_magnitude, sizeof(fod)*npoints*num_lcs);
-
-    fod ovrl_mag = 2.12323;
-
-    for (int i=0; i<=mag_bins; i++){
-        bins_mag[i] = 2.0*i*ovrl_mag/((fod) mag_bins) - ovrl_mag;
-    }
-
-    for (int i=0; i<=phase_bins; i++){
-        bins_phase[i] = (fod) i/((fod) phase_bins);
-    }
-
-    cudaMemcpy(d_bins_mag, bins_mag, (mag_bins + 1)*sizeof(fod), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_bins_phase, bins_phase, (phase_bins + 1)*sizeof(fod), cudaMemcpyHostToDevice);
-
-
-    std::default_random_engine generator;
-    std::uniform_real_distribution<fod> distribution(0.0, 1000.0);
-
-    for (int i=0; i< npoints*num_lcs; i++){
-        time_vals[i] = distribution(generator);
-        mag_vals[i] = ovrl_mag*sin(2.0*3.1415*0.083333*time_vals[i]); // period of 12 minutes
-    }
-
-    cudaMemcpy(d_t_vals, time_vals, npoints*num_lcs*sizeof(fod), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_magnitude, mag_vals, npoints*num_lcs*sizeof(fod), cudaMemcpyHostToDevice);
-
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
+void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, fod *d_phase_bin_edges, int *d_mag_bin_inds, fod *d_time_vals,
+             int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, fod *d_min_light_curve_times, fod half_dbins)
+{
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
-    dim3 griddim(num_lcs, nblocks);
-    cudaEventRecord(start);
-    kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs,  num_freqs, d_bins_phase, d_bins_mag, d_t_vals, d_magnitude,  npoints,  mag_bins,  phase_bins, num_lcs);
+    //printf("%d\n", nblocks, num_pdots, num_lcs);
+    dim3 griddim(nblocks, 1, num_pdots);
+
+    cudaStream_t streams[num_lcs];
+
+    for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+        cudaStreamCreate(&streams[lc_i]);
+
+        kernel<<<griddim, NUM_THREADS, 0, streams[lc_i]>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
+                                     d_phase_bin_edges, d_mag_bin_inds, d_time_vals,
+                                     d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
+                                     num_lcs, d_min_light_curve_times, half_dbins, lc_i);
+    }
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
-    fod milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    printf("%e, %e\n", milliseconds/1.0e3, milliseconds/1.0e3/((fod) num_freqs*num_lcs));
 
-    cudaMemcpy(ce_vals, d_ce_vals, num_freqs*sizeof(fod), cudaMemcpyDeviceToHost);
+    for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+            cudaStreamDestroy(streams[lc_i]);
 
-    printf("%d\n", nblocks);
-    //for (int i=0; i<num_freqs; i++){
-    //     if (i % (1 << 22) == 0) printf("%lf, %lf\n", 1./freqs[i], ce_vals[i]);
-    //}
+        }
 
-    delete[] freqs;
-    delete[] ce_vals;
-    delete[] time_vals;
-    delete[] mag_vals;
-    delete[] bins_mag;
-    delete[] bins_phase;
-
-    cudaFree(d_ce_vals);
-    cudaFree(d_freqs);
-    cudaFree(d_magnitude);
-    cudaFree(d_t_vals);
-    cudaFree(d_bins_mag);
-    cudaFree(d_bins_phase);
-}*/
+}

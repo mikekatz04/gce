@@ -177,7 +177,7 @@ class ConditionalEntropy:
 
             light_curve_mags_inds_in = xp.asarray(
                 light_curve_mags_inds.flatten()
-            ).astype(self.dtype)
+            ).astype(xp.int32)
 
             number_of_pts_in = xp.asarray(number_of_pts).astype(xp.int32)
 

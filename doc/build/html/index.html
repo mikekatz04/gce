@@ -168,7 +168,7 @@ It will be length 2 if multiple pdots are tested (tuple=(<strong>freqs</strong>,
 
 <dl class="method">
 <dt id="gcex.gce.ConditionalEntropy.batched_run_const_nfreq">
-<code class="sig-name descname">batched_run_const_nfreq</code><span class="sig-paren">(</span><em class="sig-param">lightcurves</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">freqs</em>, <em class="sig-param">pdots=None</em>, <em class="sig-param">return_type='all'</em>, <em class="sig-param">pdot_batch_size=1</em>, <em class="sig-param">show_progress=True</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy.batched_run_const_nfreq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">batched_run_const_nfreq</code><span class="sig-paren">(</span><em class="sig-param">lightcurves</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">freqs</em>, <em class="sig-param">pdots=None</em>, <em class="sig-param">pdot_batch_size=None</em>, <em class="sig-param">return_type='all'</em>, <em class="sig-param">show_progress=True</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy.batched_run_const_nfreq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run gce on lights curves.</p>
 <p>This method actually performs the gce calculation.</p>
 <dl class="field-list simple">
@@ -182,15 +182,16 @@ information. The light curve arrays have shape
 computation. Usually, the larger the number, the faster the
 algorithm will perform, but with diminishing returns. However,
 there is an upper limit due to memory on the GPU.</p></li>
-<li><p><strong>pdot_batch_size</strong> (<em>int</em>) – Number of pdots to run for each computation.
+<li><p><strong>freqs</strong> (<em>1D array</em>) – Array with the frequencies to be tested.</p></li>
+<li><p><strong>pdots</strong> (<em>1D array</em><em>, </em><em>optional</em>) – Array with pdots to be tested. Default
+is <cite>None</cite> indicating a test with 0.0 for the pdot.</p></li>
+<li><p><strong>pdot_batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of pdots to run for each computation.
 Choice here affects the memory usage and the GPU and splits up
 the calculation as needed to stay within memory limits. When
 len(pdots) &gt; pdot_batch_size, the calculations are run
 separately and then combined, including statistics of the
-conditional entropy values.</p></li>
-<li><p><strong>freqs</strong> (<em>1D array</em>) – Array with the frequencies to be tested.</p></li>
-<li><p><strong>pdots</strong> (<em>1D array</em><em>, </em><em>optional</em>) – Array with pdots to be tested. Default
-is <cite>None</cite> indicating a test with 0.0 for the pdot.</p></li>
+conditional entropy values. Defaults to <cite>None</cite>, which means gce
+will use the length of the pdot array as the <cite>pdot_batch_size</cite>.</p></li>
 <li><p><strong>return_type</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>User chosen return type.</p>
 <dl>
 <dt>Options:</dt><dd><dl class="simple">
@@ -219,6 +220,12 @@ using tqdm. Default is True.</p></li>
 <dt class="field-even">Raises</dt>
 <dd class="field-even"><p><strong>TypeError</strong> – <cite>return_type</cite> is set to a value that is not in the
     options list.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>TODOs:</dt><dd><p>Add pdot batching.
+Add large light curve option.
+Look at using only one mag point.</p>
 </dd>
 </dl>
 </dd></dl>

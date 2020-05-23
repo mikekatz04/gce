@@ -52,9 +52,10 @@ def test(input_dict, output_string):
         output = ce.batched_run_const_nfreq(
             lcs,
             batch_size,
-            len(test_pdots),
             test_freqs,  # [1000000:1001000],
-            test_pdots,
+            pdots=test_pdots,
+            pdot_batch_size=len(test_pdots),
+            return_type="all",
             show_progress=True,
         )
         et = time.perf_counter()

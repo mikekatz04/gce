@@ -56,10 +56,10 @@ int get_phase_bin(fod t_val, fod pdot, fod frequency, fod period, fod half_dbins
     return j;
 }
 
-__device__ fod ce (fod frequency, fod pdot, fod* __restrict__ phase_bin_edges,
+__device__ fod ce (fod frequency, fod pdot,
                    int* __restrict__ mag_bin_inds, fod* __restrict__ time_vals, int npoints,
                    int mag_bins, int phase_bins,
-                   int offset, int lc_i, fod lc_start_time,
+                   int offset, int lc_i,
                    fod * temp_phase_prob, fod *overall_phase_prob, fod half_dbins){
     fod period = 1./frequency;
     fod folded_val = 0.0;
@@ -99,7 +99,7 @@ __device__ fod ce (fod frequency, fod pdot, fod* __restrict__ phase_bin_edges,
             ///index = indicies[k];
             //if (index == -1) break;
 
-            t_val = time_vals[k] - lc_start_time;
+            t_val = time_vals[k];
             j = get_phase_bin(t_val, pdot, frequency, period, half_dbins, phase_bins);
 
             overall_phase_prob[j] += 1.0;
@@ -116,7 +116,7 @@ __device__ fod ce (fod frequency, fod pdot, fod* __restrict__ phase_bin_edges,
     int kk = 0;
     while (kk < npoints){
         while ((mag_bin_inds[kk] == ind_mag)){
-            t_val = time_vals[kk] - lc_start_time;
+            t_val = time_vals[kk];
             j = get_phase_bin(t_val, pdot, frequency, period, half_dbins, phase_bins);
 
             temp_phase_prob[j] += 1.0;
@@ -177,14 +177,12 @@ __device__ fod ce (fod frequency, fod pdot, fod* __restrict__ phase_bin_edges,
 }
 
 __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int num_freqs, fod* __restrict__ pdots,
-                       int num_pdots, fod* __restrict__ phase_bin_edges, int* __restrict__ mag_bin_inds,
+                       int num_pdots, int* __restrict__ mag_bin_inds,
                        fod* __restrict__ time_vals, int * __restrict__ num_pts_arr, int num_pts_max,
-                       const int mag_bins, int phase_bins, int num_lcs,
-                       fod* __restrict__ min_light_curve_times, fod half_dbins){
+                       const int mag_bins, int phase_bins, int num_lcs, fod half_dbins){
 
 
     // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
-    extern __shared__ fod share_bins_phase[];
     __shared__ fod time_vals_share[2000];
     __shared__ int mag_bin_inds_share[2000];
     __shared__ fod temp_phase_prob[51*NUM_THREADS];
@@ -204,7 +202,6 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
          lc_i += gridDim.y) {
 
      int num_pts_this_lc = num_pts_arr[lc_i];
-     fod lc_start_time = min_light_curve_times[lc_i];
 
      //printf("%d\n", num_pts_this_lc);
 
@@ -242,17 +239,17 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
 
         #endif //*/
 
-    ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], share_bins_phase, &mag_bin_inds[0],
+    ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], &mag_bin_inds[0],
                                                           &time_vals_share[0], num_pts_this_lc, mag_bins, phase_bins,
-                                                          offset, lc_i, lc_start_time,
+                                                          offset, lc_i,
                                                           &temp_phase_prob[threadIdx.x*51], &overall_phase_prob[threadIdx.x*51], half_dbins);
   }
 }
 }
 }
 
-void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, fod *d_phase_bin_edges, int *d_mag_bin_inds, fod *d_time_vals,
-             int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, fod *d_min_light_curve_times, fod half_dbins)
+void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, int *d_mag_bin_inds, fod *d_time_vals,
+             int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, fod half_dbins)
 {
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
     //printf("%d\n", nblocks, num_pdots, num_lcs);
@@ -263,10 +260,9 @@ void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_
     //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
         //cudaStreamCreate(&streams[lc_i]);
 
-        kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
-                                     d_phase_bin_edges, d_mag_bin_inds, d_time_vals,
+        kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_mag_bin_inds, d_time_vals,
                                      d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
-                                     num_lcs, d_min_light_curve_times, half_dbins);
+                                     num_lcs, half_dbins);
     //}
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());

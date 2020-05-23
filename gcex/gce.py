@@ -87,18 +87,7 @@ class ConditionalEntropy:
         else:
             self.dtype = xp.float32
 
-        self.phase_bin_edges = xp.zeros((2 * self.phase_bins,), dtype=self.dtype)
-
-        bin_start = 0.0
-        bin_end = 2.0 / (self.phase_bins + 1)
         dbin = 1.0 / (self.phase_bins + 1)
-        for i in range(self.phase_bins):
-            self.phase_bin_edges[2 * i] = bin_start + dbin * i
-            self.phase_bin_edges[2 * i + 1] = bin_end + dbin * i
-
-        self.phase_bin_edges[-1] = 1.000001
-        self.phase_bin_edges[0] = -0.000001
-
         self.half_dbins = dbin
 
         print(
@@ -158,8 +147,8 @@ class ConditionalEntropy:
         batch_size,
         freqs,
         pdots=None,
+        pdot_batch_size=None,
         return_type="all",
-        pdot_batch_size=1,
         show_progress=True,
     ):
         """Run gce on lights curves.
@@ -177,16 +166,17 @@ class ConditionalEntropy:
                 algorithm will perform, but with diminishing returns. However,
                 there is an upper limit due to memory on the GPU.
 
-            pdot_batch_size (int): Number of pdots to run for each computation.
+            freqs (1D array): Array with the frequencies to be tested.
+            pdots (1D array, optional): Array with pdots to be tested. Default
+                is `None` indicating a test with 0.0 for the pdot.
+
+            pdot_batch_size (int, optional): Number of pdots to run for each computation.
                 Choice here affects the memory usage and the GPU and splits up
                 the calculation as needed to stay within memory limits. When
                 len(pdots) > pdot_batch_size, the calculations are run
                 separately and then combined, including statistics of the
-                conditional entropy values.
-
-            freqs (1D array): Array with the frequencies to be tested.
-            pdots (1D array, optional): Array with pdots to be tested. Default
-                is `None` indicating a test with 0.0 for the pdot.
+                conditional entropy values. Defaults to `None`, which means gce
+                will use the length of the pdot array as the `pdot_batch_size`.
 
             return_type (str, optional): User chosen return type.
 
@@ -207,8 +197,13 @@ class ConditionalEntropy:
             TypeError: `return_type` is set to a value that is not in the
                 options list.
 
+        TODOs:
+            Add pdot batching.
+            Add large light curve option.
+            Look at using only one mag point.
 
         """
+
         if return_type not in ["all", "best", "best_params"]:
             raise TypeError(
                 "Variable `return_type` must be set to either 'all', 'best', or 'best_params'"
@@ -260,7 +255,6 @@ class ConditionalEntropy:
                 light_curve_arr[j, : len(lc)] = np.asarray(lc)
 
             light_curve_times = light_curve_arr[:, :, 0]
-            min_light_curve_times = light_curve_times[:, 0]
 
             light_curve_mags = light_curve_arr[:, :, 1]
             light_curve_mags_inds = (
@@ -332,9 +326,6 @@ class ConditionalEntropy:
 
             freqs_in = xp.asarray(freqs).astype(self.dtype)
             pdots_in = xp.asarray(pdots).astype(self.dtype)
-            min_light_curve_times_in = xp.asarray(min_light_curve_times).astype(
-                self.dtype
-            )
 
             ce_vals_out_temp = xp.zeros(
                 (len(freqs_in) * len(pdots_in) * len(light_curve_times),),
@@ -347,7 +338,6 @@ class ConditionalEntropy:
                 len(freqs_in),
                 pdots_in,
                 len(pdots_in),
-                self.phase_bin_edges,
                 light_curve_mags_inds_in,
                 light_curve_times_in,
                 number_of_pts_in,
@@ -355,7 +345,6 @@ class ConditionalEntropy:
                 self.mag_bins,
                 self.phase_bins,
                 len(light_curve_times),
-                min_light_curve_times_in,
                 self.half_dbins,
             )
             ce_vals_out.append(ce_vals_out_temp.get())

@@ -27,7 +27,7 @@ def test(input_dict, output_string):
     max_freq = 1.0 / min_period
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
 
-    input_dict = {key: input_dict[key][0:4] for key in input_dict}
+    input_dict = {key: input_dict[key][0:1] for key in input_dict}
     lcs = get_lcs_test(
         input_dict, min_pts=100, max_pts=107, verbose=25, mean_dt=7, sig_t=2
     )
@@ -41,8 +41,8 @@ def test(input_dict, output_string):
     ce = ConditionalEntropy(phase_bins=15)
     batch_size = 200
 
-    num_pdots_for_timing = (2 ** np.arange(11)).astype(int)
-    num_pdots_for_timing = np.array([2, 2, 2])
+    num_pdots_for_timing = (2 ** np.arange(6)).astype(int)
+    # num_pdots_for_timing = np.array([2, 2, 2])
     total_time = []
     time_per = []
     for num_pdots in num_pdots_for_timing:
@@ -50,7 +50,12 @@ def test(input_dict, output_string):
         st = time.perf_counter()
 
         output = ce.batched_run_const_nfreq(
-            lcs, batch_size, len(test_pdots), test_freqs, test_pdots, show_progress=True
+            lcs,
+            batch_size,
+            len(test_pdots),
+            test_freqs,  # [1000000:1001000],
+            test_pdots,
+            show_progress=True,
         )
         et = time.perf_counter()
         print(

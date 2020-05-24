@@ -257,9 +257,7 @@ class ConditionalEntropy:
             light_curve_times = light_curve_arr[:, :, 0]
 
             light_curve_mags = light_curve_arr[:, :, 1]
-            light_curve_mags_inds = (
-                np.ones(light_curve_mags.shape + (2,)).astype(int) * -1
-            )
+            light_curve_mags_inds = np.ones(light_curve_mags.shape).astype(int) * -1
 
             light_curve_mag_bin_edges = []
             for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max):
@@ -287,14 +285,13 @@ class ConditionalEntropy:
                     mag = lc_mag[kk]
                     num_bin = 0
                     k = 0
-                    while num_bin < 2 and k < self.mag_bins:
+                    while num_bin < 1 and k < self.mag_bins:
                         bin_min, bin_max = light_curve_mag_bin_edges[lc_i, k]
                         if mag >= bin_min and mag < bin_max:
-                            light_curve_mags_inds[lc_i, kk, num_bin] = k
+                            light_curve_mags_inds[lc_i, kk] = k
                             num_bin += 1
                         k += 1
 
-            light_curve_times = np.repeat(light_curve_times, 2, axis=1)
             light_curve_mags_inds = light_curve_mags_inds.reshape(
                 light_curve_mags_inds.shape[0], -1
             )
@@ -303,9 +300,6 @@ class ConditionalEntropy:
             for i, sort_i in enumerate(sort):
                 light_curve_mags_inds[i] = light_curve_mags_inds[i][sort_i]
                 light_curve_times[i] = light_curve_times[i][sort_i]
-
-                num_pts_temp = np.where(light_curve_mags_inds[i] != -1)[0][-1]
-                number_of_pts[i] = num_pts_temp
 
             # flatten everything
             light_curve_times_in = (

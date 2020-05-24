@@ -102,14 +102,30 @@ __device__ fod ce (fod frequency, fod pdot,
             t_val = time_vals[k];
             j = get_phase_bin(t_val, pdot, frequency, period, half_dbins, phase_bins);
 
+            for (int i=0; i<2; i+=1){
+
+            }
+
             overall_phase_prob[j] += 1.0;
             total_points += 1.0;
 
             //if (k == 10) printf("%lf %lf %lf %lf, %d %d\n", t_val, pdot, period, half_dbins, j, phase_bins);
 
-            j = (j-1) % phase_bins;
-            overall_phase_prob[j] += 1.0;
+            j1 = (j-1) % phase_bins;
+            overall_phase_prob[j1] += 1.0;
             total_points += 1.0;
+
+            ind_mag = mag_bin_inds[kk];
+            if ((ind_mag != 0) && (ind_mag != mag_bins - 1)){
+
+                overall_phase_prob[j] += 1.0;
+                total_points += 1.0;
+
+                overall_phase_prob[j1] += 1.0;
+                total_points += 1.0;
+
+            }
+
         }
 
     ind_mag = mag_bin_inds[0];
@@ -121,8 +137,18 @@ __device__ fod ce (fod frequency, fod pdot,
 
             temp_phase_prob[j] += 1.0;
             //printf("%lf %lf %lf %lf, %d %d %d\n", t_val, pdot, period, half_dbins, j, mag_bin_inds[kk], ind_mag);
-            j = (j-1) % phase_bins;
-            temp_phase_prob[j] += 1.0;
+            j1 = (j-1) % phase_bins;
+            temp_phase_prob[j1] += 1.0;
+
+            if ((ind_mag != 0) && (ind_mag != mag_bins - 1)){
+
+                overall_phase_prob[j] += 1.0;
+                total_points += 1.0;
+
+                overall_phase_prob[j1] += 1.0;
+                total_points += 1.0;
+
+            }
 
             kk += 1;
             if (kk == npoints) break;

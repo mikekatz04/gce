@@ -54,8 +54,8 @@ def test(input_dict, output_string):
             batch_size,
             test_freqs,  # [1000000:1001000],
             pdots=test_pdots,
-            pdot_batch_size=len(test_pdots),
-            return_type="all",
+            pdot_batch_size=2,
+            return_type="best",
             show_progress=True,
         )
         et = time.perf_counter()

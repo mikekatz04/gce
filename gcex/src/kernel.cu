@@ -299,3 +299,30 @@ void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_
     //    }
 
 }
+
+
+void run_long_lc_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, int *d_mag_bin_inds, fod *d_time_vals,
+             int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, fod half_dbins)
+{
+    int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
+    //printf("%d\n", nblocks, num_pdots, num_lcs);
+    dim3 griddim(nblocks, num_lcs, num_pdots);
+
+    //cudaStream_t streams[num_lcs];
+
+    //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+        //cudaStreamCreate(&streams[lc_i]);
+
+        kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_mag_bin_inds, d_time_vals,
+                                     d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
+                                     num_lcs, half_dbins);
+    //}
+    cudaDeviceSynchronize();
+    gpuErrchk(cudaGetLastError());
+
+    //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
+    //        cudaStreamDestroy(streams[lc_i]);
+
+    //    }
+
+}

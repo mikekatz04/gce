@@ -30,6 +30,9 @@ cdef extern from "src/kernel.hh":
     void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, int *d_mag_bin_inds, fod *d_time_vals,
                  int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, float half_dbins);
 
+    void run_long_lc_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, int *d_mag_bin_inds, fod *d_time_vals,
+                 int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, float half_dbins);
+
 
 @pointer_adjust
 def run_gce_wrap(ce_vals, freqs, num_freqs, pdots,
@@ -45,6 +48,25 @@ def run_gce_wrap(ce_vals, freqs, num_freqs, pdots,
     cdef size_t num_pts_arr_in = num_pts_arr
 
     run_gce(<fod*> ce_vals_in, <fod*> freqs_in, num_freqs, <fod*> pdots_in, num_pdots,
+            <int*> mag_bin_inds_in, <fod*> time_vals_in,
+            <int*> num_pts_arr_in, num_pts_max, mag_bins,
+            phase_bins, num_lcs, half_dbins)
+
+
+@pointer_adjust
+def run_long_lc_gce_wrap(ce_vals, freqs, num_freqs, pdots,
+                 num_pdots, mag_bin_inds,
+                 time_vals, num_pts_arr, num_pts_max, mag_bins,
+                 phase_bins, num_lcs, half_dbins):
+
+    cdef size_t ce_vals_in = ce_vals
+    cdef size_t freqs_in = freqs
+    cdef size_t pdots_in = pdots
+    cdef size_t mag_bin_inds_in = mag_bin_inds
+    cdef size_t time_vals_in = time_vals
+    cdef size_t num_pts_arr_in = num_pts_arr
+
+    run_long_lc_gce(<fod*> ce_vals_in, <fod*> freqs_in, num_freqs, <fod*> pdots_in, num_pdots,
             <int*> mag_bin_inds_in, <fod*> time_vals_in,
             <int*> num_pts_arr_in, num_pts_max, mag_bins,
             phase_bins, num_lcs, half_dbins)

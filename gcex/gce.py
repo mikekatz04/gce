@@ -23,7 +23,7 @@ from tqdm import tqdm
 import time
 
 try:
-    from GCE import run_gce_wrap
+    from GCE import run_gce_wrap, run_long_lc_gce_wrap
 except ImportError:
     pass
 
@@ -47,6 +47,11 @@ class ConditionalEntropy:
     Args:
         phase_bins (int, optional): Number of phase bins. Default is 30.
         mag_bins (int, optional): Number of magnitude bins. Default is 10.
+        long_limit (int, optional): Length of a light curve where the code
+            forces the use of the longer light curve version of gce.
+            Default is 2,000.
+        use_long (bool, optional): If True, use the long gce version of the
+            code. Default is False.
 
     Attributes:
         phase_bins (int): Number of phase bins.
@@ -71,7 +76,9 @@ class ConditionalEntropy:
 
     """
 
-    def __init__(self, phase_bins=30, mag_bins=10, **kwargs):
+    def __init__(
+        self, phase_bins=30, mag_bins=10, long_limit=1000, use_long=False, **kwargs
+    ):
 
         prop_defaults = {"use_double": False}  # not implemented yet
 
@@ -89,6 +96,12 @@ class ConditionalEntropy:
 
         dbin = 1.0 / (self.phase_bins + 1)
         self.half_dbins = dbin
+
+        if use_long:
+            self.gce_func = run_long_lc_gce_wrap
+
+        else:
+            self.gce_func = run_gce_wrap
 
         print(
             "\nGCE initialized with {} phase bins and {} mag bins.".format(
@@ -229,7 +242,7 @@ class ConditionalEntropy:
             (len(freqs_in) * len(pdots_in) * len(light_curve_times),), dtype=self.dtype
         )
 
-        run_gce_wrap(
+        self.gce_func(
             ce_vals_out_temp,
             freqs_in,
             len(freqs_in),
@@ -337,8 +350,10 @@ class ConditionalEntropy:
                 options list.
 
         TODOs:
-            Add pdot batching.
+            Different Returns
+            min_light_curve_times
             Add large light curve option.
+            fix mag_bin_determination on the second
 
         """
 

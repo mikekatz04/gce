@@ -69,6 +69,7 @@ __device__ fod ce (fod frequency, fod pdot,
     fod t_val = 0.0;
     fod total_points = 0.0;
     int j = 0;
+    int j1 = 0;
 
     for (int jj = 0; jj<phase_bins; jj+=1){
             overall_phase_prob[jj] = 0.0;
@@ -115,7 +116,7 @@ __device__ fod ce (fod frequency, fod pdot,
             overall_phase_prob[j1] += 1.0;
             total_points += 1.0;
 
-            ind_mag = mag_bin_inds[kk];
+            ind_mag = mag_bin_inds[k];
             if ((ind_mag != 0) && (ind_mag != mag_bins - 1)){
 
                 overall_phase_prob[j] += 1.0;
@@ -301,21 +302,138 @@ void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_
 }
 
 
-void run_long_lc_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, int *d_mag_bin_inds, fod *d_time_vals,
-             int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, fod half_dbins)
+__global__ void kernel_share(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int num_freqs, fod* __restrict__ pdots,
+                       int num_pdots, int* __restrict__ mag_bin_inds,
+                       fod* __restrict__ time_vals, int * __restrict__ num_pts_arr, int num_pts_max,
+                       const int mag_bins, int phase_bins, int num_lcs, fod half_dbins){
+
+       // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
+//       extern __shared__ fod share_bins_phase[];
+       __shared__ fod overall_phase_prob[15];
+       __shared__ fod bin_counts[10*15];
+
+       __shared__ fod total_points;
+       __shared__ fod sum_ij;
+
+       __shared__ fod period, freq, pdot;
+
+       //for (int j=threadIdx.x; j<=phase_bins; j+=blockDim.x){
+       //    share_bins_phase[2*j] = phase_bin_edges[2*j];
+       //    share_bins_phase[2*j+1] = phase_bin_edges[2*j+1];
+     // }
+
+
+       __syncthreads();
+
+
+       for (int lc_i = blockIdx.y;
+            lc_i < num_lcs;
+            lc_i += gridDim.y) {
+
+        int num_pts_this_lc = num_pts_arr[lc_i];
+
+        //printf("%d\n", num_pts_this_lc);
+
+      for (int pdot_i = blockIdx.z;
+           pdot_i < num_pdots;
+           pdot_i += gridDim.z) {
+
+
+       for (int i = blockIdx.x;
+            i < num_freqs;
+            i += gridDim.x) {
+
+        if (threadIdx.x == 0){
+        pdot = pdots[pdot_i];
+        freq = freqs[i];
+        period = 1/freq;
+        total_points = 0.0;
+        sum_ij = 0.0;
+
+    }
+        __syncthreads();
+        for (int jj=threadIdx.x; jj<15*10; jj+=blockDim.x){
+            bin_counts[jj] = 0.0;
+        }
+
+        __syncthreads();
+
+        for (int jj=threadIdx.x; jj<15; jj+=blockDim.x){
+            overall_phase_prob[jj] = 0.0;
+        }
+
+        __syncthreads();
+
+        for (int jj=threadIdx.x; jj<num_pts_this_lc; jj+=blockDim.x){
+
+            int j = get_phase_bin(time_vals[lc_i*num_pts_max + jj], pdot, freq, period, half_dbins, phase_bins);
+            int mag_ind = mag_bin_inds[lc_i*num_pts_max + jj];
+
+            atomicAdd(&overall_phase_prob[j], 1.0);
+            atomicAdd(&bin_counts[j*10 + mag_ind], 1.0);
+            atomicAdd(&total_points, 1.0);
+
+            int j2 = (j >= 0) ? j = 14 : (j - 1) % 15 ;  // FIXME: when adjusted from 15, needs to be adjusted.
+            atomicAdd(&overall_phase_prob[j2], 1.0);
+            atomicAdd(&bin_counts[j2*10 + mag_ind], 1.0);
+            atomicAdd(&total_points, 1.0);
+
+            if (mag_ind != 0 && mag_ind != mag_bins - 1){
+
+                mag_ind -= 1;
+
+                atomicAdd(&overall_phase_prob[j], 1.0);
+                atomicAdd(&bin_counts[j*10 + mag_ind], 1.0);
+                atomicAdd(&total_points, 1.0);
+
+                atomicAdd(&overall_phase_prob[j2], 1.0);
+                atomicAdd(&bin_counts[j2*10 + mag_ind], 1.0);
+                atomicAdd(&total_points, 1.0);
+            }
+
+            //if (i == 950) printf("%d %d %d %d %d %d, %lf %lf\n",lc_i, pdot_i, i, jj, j, mag_ind, overall_phase_prob[j], bin_counts[j*10 + mag_ind]);
+
+        }
+
+        __syncthreads();
+
+        //fod sum_ij = 0.0;
+        for (int jj=threadIdx.x; jj<15*10; jj+=blockDim.x){
+            if (bin_counts[jj] == 0.0) continue;
+            int j = jj/10;
+
+            //printf("%d %d, %lf %lf\n", jj, j, overall_phase_prob[j], bin_counts[jj]);
+            //if (overall_phase_prob[j] <bin_counts[jj]) printf("bad %d %d %d %d %d, %lf %lf\n",lc_i, pdot_i, i, jj, j, overall_phase_prob[j], bin_counts[jj]);
+            atomicAdd(&sum_ij, bin_counts[jj]*log(overall_phase_prob[j]/bin_counts[jj]));
+        }
+        __syncthreads();
+        //if (i == 0) printf("%lf %lf\n", sum_ij, total_points);
+
+        ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = sum_ij/total_points;
+
+     }
+   }
+   }
+   }
+
+
+   void run_long_lc_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_pdots, int *d_mag_bin_inds, fod *d_time_vals,
+                int *d_num_pts_arr, int num_pts_max, int mag_bins, int phase_bins, int num_lcs, fod half_dbins)
 {
     int nblocks = (int)ceil((num_freqs + NUM_THREADS - 1)/NUM_THREADS);
     //printf("%d\n", nblocks, num_pdots, num_lcs);
-    dim3 griddim(nblocks, num_lcs, num_pdots);
+    //dim3 griddim(nblocks, num_lcs, num_pdots);
+    dim3 griddim(num_freqs, num_lcs, num_pdots);
 
+    int nthreads_long = 256;
+    kernel_share<<<griddim, nthreads_long>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
+                                 d_mag_bin_inds, d_time_vals,
+                                 d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
+                                 num_lcs, half_dbins);
     //cudaStream_t streams[num_lcs];
 
     //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
         //cudaStreamCreate(&streams[lc_i]);
-
-        kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_mag_bin_inds, d_time_vals,
-                                     d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
-                                     num_lcs, half_dbins);
     //}
     cudaDeviceSynchronize();
     gpuErrchk(cudaGetLastError());

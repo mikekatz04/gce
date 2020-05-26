@@ -87,6 +87,7 @@ class ConditionalEntropy:
 
         self.phase_bins = phase_bins
         self.mag_bins = mag_bins
+        self.long_limit, self.use_long = long_limit, use_long
 
         if self.use_double:
             raise NotImplementedError
@@ -96,12 +97,6 @@ class ConditionalEntropy:
 
         dbin = 1.0 / (self.phase_bins + 1)
         self.half_dbins = dbin
-
-        if use_long:
-            self.gce_func = run_long_lc_gce_wrap
-
-        else:
-            self.gce_func = run_gce_wrap
 
         print(
             "\nGCE initialized with {} phase bins and {} mag bins.".format(
@@ -242,6 +237,14 @@ class ConditionalEntropy:
             (len(freqs_in) * len(pdots_in) * len(light_curve_times),), dtype=self.dtype
         )
 
+        max_num_pts_in = number_of_pts_in.max().item()
+
+        if self.use_long or max_num_pts_in > self.long_limit:
+            self.gce_func = run_long_lc_gce_wrap
+
+        else:
+            self.gce_func = run_gce_wrap
+
         self.gce_func(
             ce_vals_out_temp,
             freqs_in,
@@ -251,7 +254,7 @@ class ConditionalEntropy:
             light_curve_mags_inds_in,
             light_curve_times_in,
             number_of_pts_in,
-            number_of_pts_in.max().item(),
+            max_num_pts_in,
             self.mag_bins,
             self.phase_bins,
             len(light_curve_times),

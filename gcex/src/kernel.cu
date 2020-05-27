@@ -112,7 +112,7 @@ __device__ fod ce (fod frequency, fod pdot,
 
             //if (k == 10) printf("%lf %lf %lf %lf, %d %d\n", t_val, pdot, period, half_dbins, j, phase_bins);
 
-            j1 = (j-1) % phase_bins;
+            int j1 = (j > 0) ? j = phase_bins - 1 : (j - 1) % phase_bins;
             overall_phase_prob[j1] += 1.0;
             total_points += 1.0;
 
@@ -138,7 +138,7 @@ __device__ fod ce (fod frequency, fod pdot,
 
             temp_phase_prob[j] += 1.0;
             //printf("%lf %lf %lf %lf, %d %d %d\n", t_val, pdot, period, half_dbins, j, mag_bin_inds[kk], ind_mag);
-            j1 = (j-1) % phase_bins;
+            int j1 = (j <= 0) ? j = phase_bins - 1 : (j - 1) % phase_bins ;
             temp_phase_prob[j1] += 1.0;
 
             if ((ind_mag != 0) && (ind_mag != mag_bins - 1)){
@@ -210,8 +210,9 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
 
 
     // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
-    __shared__ fod time_vals_share[2000];
-    __shared__ int mag_bin_inds_share[2000];
+    extern __shared__ fod time_vals_share[];
+    int *mag_bin_inds_share = (int*)(&time_vals_share[num_pts_max*2]);
+    //printf("%ld %ld, %ld\n", time_vals_share, mag_bin_inds_share, num_pts_max*2*sizeof(fod));
     __shared__ fod temp_phase_prob[51*NUM_THREADS];
     __shared__ fod overall_phase_prob[51*NUM_THREADS];
 
@@ -233,9 +234,14 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
      //printf("%d\n", num_pts_this_lc);
 
      for (int j=threadIdx.x; j<num_pts_this_lc; j+=blockDim.x){
+
          time_vals_share[j] = time_vals[lc_i*num_pts_max + j];
          mag_bin_inds_share[j] = mag_bin_inds[lc_i*num_pts_max + j];
+
+         //printf("%d\n", mag_bin_inds_share[j]);
      }
+
+      //printf("CHECK\n");
 
      __syncthreads();
 
@@ -266,7 +272,7 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
 
         #endif //*/
 
-    ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], &mag_bin_inds[0],
+    ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], mag_bin_inds_share,
                                                           &time_vals_share[0], num_pts_this_lc, mag_bins, phase_bins,
                                                           offset, lc_i,
                                                           &temp_phase_prob[threadIdx.x*51], &overall_phase_prob[threadIdx.x*51], half_dbins);
@@ -287,7 +293,9 @@ void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_
     //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
         //cudaStreamCreate(&streams[lc_i]);
 
-        kernel<<<griddim, NUM_THREADS>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_mag_bin_inds, d_time_vals,
+        size_t numBytes = 2*(sizeof(fod)*num_pts_max + sizeof(int)*num_pts_max);
+        //printf("num_bytes: %d, %d, %d\n", numBytes, sizeof(int), num_pts_max*2*sizeof(fod));
+        kernel<<<griddim, NUM_THREADS, numBytes>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_mag_bin_inds, d_time_vals,
                                      d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
                                      num_lcs, half_dbins);
     //}

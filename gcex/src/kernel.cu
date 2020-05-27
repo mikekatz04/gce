@@ -211,10 +211,11 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
 
     // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
     extern __shared__ fod time_vals_share[];
-    int *mag_bin_inds_share = (int*)(&time_vals_share[num_pts_max*2]);
+    int *mag_bin_inds_share = (int*)(&time_vals_share[num_pts_max]);
     //printf("%ld %ld, %ld\n", time_vals_share, mag_bin_inds_share, num_pts_max*2*sizeof(fod));
-    __shared__ fod temp_phase_prob[51*NUM_THREADS];
-    __shared__ fod overall_phase_prob[51*NUM_THREADS];
+    fod * overall_phase_prob = (fod*) &time_vals_share[2*num_pts_max];
+    //__shared__ fod temp_phase_prob[phase_bin*NUM_THREADS];
+    fod *temp_phase_prob = (fod*) &time_vals_share[2*num_pts_max + phase_bins*NUM_THREADS];
 
 
     //for (int j=threadIdx.x; j<=phase_bins; j+=blockDim.x){
@@ -275,7 +276,7 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
     ce_vals[(lc_i*num_pdots + pdot_i)*num_freqs + i] = ce(freqs[i], pdots[pdot_i], mag_bin_inds_share,
                                                           &time_vals_share[0], num_pts_this_lc, mag_bins, phase_bins,
                                                           offset, lc_i,
-                                                          &temp_phase_prob[threadIdx.x*51], &overall_phase_prob[threadIdx.x*51], half_dbins);
+                                                          &temp_phase_prob[threadIdx.x*phase_bins], &overall_phase_prob[threadIdx.x*phase_bins], half_dbins);
   }
 }
 }
@@ -293,7 +294,7 @@ void run_gce(fod *d_ce_vals, fod *d_freqs, int num_freqs, fod *d_pdots, int num_
     //for (int lc_i=0; lc_i<num_lcs; lc_i+=1){
         //cudaStreamCreate(&streams[lc_i]);
 
-        size_t numBytes = 2*(sizeof(fod)*num_pts_max + sizeof(int)*num_pts_max);
+        size_t numBytes = sizeof(fod)*num_pts_max + sizeof(int)*num_pts_max + sizeof(fod)*phase_bins*NUM_THREADS + sizeof(fod)*phase_bins*NUM_THREADS;
         //printf("num_bytes: %d, %d, %d\n", numBytes, sizeof(int), num_pts_max*2*sizeof(fod));
         kernel<<<griddim, NUM_THREADS, numBytes>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots, d_mag_bin_inds, d_time_vals,
                                      d_num_pts_arr, num_pts_max, mag_bins, phase_bins,

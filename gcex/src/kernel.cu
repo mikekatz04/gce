@@ -110,7 +110,7 @@ __device__ fod ce (fod frequency, fod pdot,
             overall_phase_prob[j] += 1.0;
             total_points += 1.0;
 
-            //if (k == 10) printf("%lf %lf %lf %lf, %d %d\n", t_val, pdot, period, half_dbins, j, phase_bins);
+            //if (k == mag_bins) printf("%lf %lf %lf %lf, %d %d\n", t_val, pdot, period, half_dbins, j, phase_bins);
 
             int j1 = (j > 0) ? j = phase_bins - 1 : (j - 1) % phase_bins;
             overall_phase_prob[j1] += 1.0;
@@ -209,7 +209,7 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
                        const int mag_bins, int phase_bins, int num_lcs, fod half_dbins){
 
 
-    // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
+    // __shared__ fod share_mag_bin_vals[NUM_THREADS*mag_bins];
     extern __shared__ fod time_vals_share[];
     int *mag_bin_inds_share = (int*)(&time_vals_share[num_pts_max]);
     //printf("%ld %ld, %ld\n", time_vals_share, mag_bin_inds_share, num_pts_max*2*sizeof(fod));
@@ -258,8 +258,8 @@ __global__ void kernel(fod* __restrict__ ce_vals, fod* __restrict__ freqs, int n
     int offset = mag_bins*threadIdx.x;
 
 
-    //__shared__ fod share_t_vals[100];
-    //__shared__ fod share_magnitude[100];
+    //__shared__ fod share_t_vals[mag_bins0];
+    //__shared__ fod share_magnitude[mag_bins0];
 
         //for (int j=0; j<num_pts_this_lc; j++) share_t_vals[j] = time_vals[lc_i*num_pts_max + j];
         //for (int j=0; j<num_pts_this_lc; j++) share_magnitude[j] = mag_vals[lc_i*num_pts_max + j];
@@ -318,8 +318,8 @@ __global__ void kernel_share(fod* __restrict__ ce_vals, fod* __restrict__ freqs,
 
        // __shared__ fod share_mag_bin_vals[NUM_THREADS*10];
 //       extern __shared__ fod share_bins_phase[];
-       __shared__ fod overall_phase_prob[15];
-       __shared__ fod bin_counts[10*15];
+       extern __shared__ fod overall_phase_prob[];
+       fod *bin_counts = &overall_phase_prob[phase_bins];
 
        __shared__ fod total_points;
        __shared__ fod sum_ij;
@@ -361,13 +361,13 @@ __global__ void kernel_share(fod* __restrict__ ce_vals, fod* __restrict__ freqs,
 
     }
         __syncthreads();
-        for (int jj=threadIdx.x; jj<15*10; jj+=blockDim.x){
+        for (int jj=threadIdx.x; jj<phase_bins*mag_bins; jj+=blockDim.x){
             bin_counts[jj] = 0.0;
         }
 
         __syncthreads();
 
-        for (int jj=threadIdx.x; jj<15; jj+=blockDim.x){
+        for (int jj=threadIdx.x; jj<phase_bins; jj+=blockDim.x){
             overall_phase_prob[jj] = 0.0;
         }
 
@@ -379,12 +379,12 @@ __global__ void kernel_share(fod* __restrict__ ce_vals, fod* __restrict__ freqs,
             int mag_ind = mag_bin_inds[lc_i*num_pts_max + jj];
 
             atomicAdd(&overall_phase_prob[j], 1.0);
-            atomicAdd(&bin_counts[j*10 + mag_ind], 1.0);
+            atomicAdd(&bin_counts[j*mag_bins + mag_ind], 1.0);
             atomicAdd(&total_points, 1.0);
 
-            int j2 = (j >= 0) ? j = 14 : (j - 1) % 15 ;  // FIXME: when adjusted from 15, needs to be adjusted.
+            int j2 = (j >= 0) ? j = phase_bins - 1 : (j - 1) % phase_bins ;
             atomicAdd(&overall_phase_prob[j2], 1.0);
-            atomicAdd(&bin_counts[j2*10 + mag_ind], 1.0);
+            atomicAdd(&bin_counts[j2*mag_bins + mag_ind], 1.0);
             atomicAdd(&total_points, 1.0);
 
             if (mag_ind != 0 && mag_ind != mag_bins - 1){
@@ -392,24 +392,24 @@ __global__ void kernel_share(fod* __restrict__ ce_vals, fod* __restrict__ freqs,
                 mag_ind -= 1;
 
                 atomicAdd(&overall_phase_prob[j], 1.0);
-                atomicAdd(&bin_counts[j*10 + mag_ind], 1.0);
+                atomicAdd(&bin_counts[j*mag_bins + mag_ind], 1.0);
                 atomicAdd(&total_points, 1.0);
 
                 atomicAdd(&overall_phase_prob[j2], 1.0);
-                atomicAdd(&bin_counts[j2*10 + mag_ind], 1.0);
+                atomicAdd(&bin_counts[j2*mag_bins + mag_ind], 1.0);
                 atomicAdd(&total_points, 1.0);
             }
 
-            //if (i == 950) printf("%d %d %d %d %d %d, %lf %lf\n",lc_i, pdot_i, i, jj, j, mag_ind, overall_phase_prob[j], bin_counts[j*10 + mag_ind]);
+            //if (i == 950) printf("%d %d %d %d %d %d, %lf %lf\n",lc_i, pdot_i, i, jj, j, mag_ind, overall_phase_prob[j], bin_counts[j*mag_bins + mag_ind]);
 
         }
 
         __syncthreads();
 
         //fod sum_ij = 0.0;
-        for (int jj=threadIdx.x; jj<15*10; jj+=blockDim.x){
+        for (int jj=threadIdx.x; jj<phase_bins*mag_bins; jj+=blockDim.x){
             if (bin_counts[jj] == 0.0) continue;
-            int j = jj/10;
+            int j = jj/mag_bins;
 
             //printf("%d %d, %lf %lf\n", jj, j, overall_phase_prob[j], bin_counts[jj]);
             //if (overall_phase_prob[j] <bin_counts[jj]) printf("bad %d %d %d %d %d, %lf %lf\n",lc_i, pdot_i, i, jj, j, overall_phase_prob[j], bin_counts[jj]);
@@ -435,7 +435,8 @@ __global__ void kernel_share(fod* __restrict__ ce_vals, fod* __restrict__ freqs,
     dim3 griddim(num_freqs, num_lcs, num_pdots);
 
     int nthreads_long = 256;
-    kernel_share<<<griddim, nthreads_long>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
+    size_t numBytes = phase_bins*sizeof(fod) + mag_bins*phase_bins*sizeof(fod);
+    kernel_share<<<griddim, nthreads_long, numBytes>>>(d_ce_vals, d_freqs, num_freqs, d_pdots, num_pdots,
                                  d_mag_bin_inds, d_time_vals,
                                  d_num_pts_arr, num_pts_max, mag_bins, phase_bins,
                                  num_lcs, half_dbins);

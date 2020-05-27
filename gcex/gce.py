@@ -354,8 +354,6 @@ class ConditionalEntropy:
 
         TODOs:
             Different Returns
-            min_light_curve_times
-            Add large light curve option.
             fix mag_bin_determination on the second
 
         """

@@ -112,7 +112,7 @@ __device__ fod ce (fod frequency, fod pdot,
 
             //if (k == mag_bins) printf("%lf %lf %lf %lf, %d %d\n", t_val, pdot, period, half_dbins, j, phase_bins);
 
-            int j1 = (j > 0) ? j = phase_bins - 1 : (j - 1) % phase_bins;
+            int j1 = (j >= phase_bins - 1) ? j = 0 : (j + 1) % phase_bins;
             overall_phase_prob[j1] += 1.0;
             total_points += 1.0;
 
@@ -138,7 +138,7 @@ __device__ fod ce (fod frequency, fod pdot,
 
             temp_phase_prob[j] += 1.0;
             //printf("%lf %lf %lf %lf, %d %d %d\n", t_val, pdot, period, half_dbins, j, mag_bin_inds[kk], ind_mag);
-            int j1 = (j <= 0) ? j = phase_bins - 1 : (j - 1) % phase_bins ;
+            int j1 = (j >= phase_bins - 1) ? j = 0 : (j + 1) % phase_bins;
             temp_phase_prob[j1] += 1.0;
 
             if ((ind_mag != 0) && (ind_mag != mag_bins - 1)){
@@ -382,7 +382,7 @@ __global__ void kernel_share(fod* __restrict__ ce_vals, fod* __restrict__ freqs,
             atomicAdd(&bin_counts[j*mag_bins + mag_ind], 1.0);
             atomicAdd(&total_points, 1.0);
 
-            int j2 = (j >= 0) ? j = phase_bins - 1 : (j - 1) % phase_bins ;
+            int j2 = (j >= phase_bins -1) ? j = 0 : (j - 1) % phase_bins ;
             atomicAdd(&overall_phase_prob[j2], 1.0);
             atomicAdd(&bin_counts[j2*mag_bins + mag_ind], 1.0);
             atomicAdd(&total_points, 1.0);

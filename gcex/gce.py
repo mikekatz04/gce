@@ -98,6 +98,8 @@ class ConditionalEntropy:
         dbin = 1.0 / (self.phase_bins + 1)
         self.half_dbins = dbin
 
+        self.half_d_mag_bins = 1.0 / (self.mag_bins + 1)
+
         print(
             "\nGCE initialized with {} phase bins and {} mag bins.".format(
                 self.phase_bins, self.mag_bins
@@ -171,7 +173,7 @@ class ConditionalEntropy:
         light_curve_times = light_curve_arr[:, :, 0]
 
         light_curve_mags = light_curve_arr[:, :, 1]
-        light_curve_mags_inds = np.ones(light_curve_mags.shape).astype(int) * -1
+        light_curve_mags_inds = np.ones(light_curve_mags.shape + (2,)).astype(int) * -1
 
         light_curve_mag_bin_edges = []
         for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max):
@@ -185,35 +187,44 @@ class ConditionalEntropy:
             else:
                 max_val = max_val * 1.001
 
-            light_curve_mag_bin_edges.append(
-                min_val + (max_val - min_val) * mag_bin_template
-            )
+            light_curve_mag_bin_edges.append([min_val, max_val])
 
-        light_curve_mag_bin_edges = np.asarray(light_curve_mag_bin_edges).reshape(
-            -1, self.mag_bins, 2
-        )
+        light_curve_mag_bin_edges = np.asarray(light_curve_mag_bin_edges)
 
         # figure out index of mag bin (can put on gpu for speed up)
-        for lc_i, lc_mag in enumerate(light_curve_mags):
-            for kk in range(number_of_pts[lc_i]):
-                mag = lc_mag[kk]
-                num_bin = 0
-                k = 0
-                while num_bin < 1 and k < self.mag_bins:
-                    bin_min, bin_max = light_curve_mag_bin_edges[lc_i, k]
-                    if mag >= bin_min and mag < bin_max:
-                        light_curve_mags_inds[lc_i, kk] = k
-                        num_bin += 1
-                    k += 1
+        for lc_i, (lc_mag, min_max) in enumerate(
+            zip(light_curve_mags, light_curve_mag_bin_edges)
+        ):
+            min = min_max[0]
+            diff = min_max[1] - min_max[0]
+
+            mag_ind = np.floor((lc_mag - min) / diff / self.half_d_mag_bins).astype(int)
+            mag_ind_2 = -1 * ((mag_ind == 0) | (mag_ind == self.mag_bins)) + (
+                mag_ind - 1
+            ) * ((mag_ind > 0) & (mag_ind < self.mag_bins))
+
+            mag_ind = mag_ind * (mag_ind != self.mag_bins) + (mag_ind - 1) * (
+                mag_ind == self.mag_bins
+            )
+
+            light_curve_mags_inds[lc_i, :, 0] = mag_ind
+            light_curve_mags_inds[lc_i, :, 1] = mag_ind_2
 
         light_curve_mags_inds = light_curve_mags_inds.reshape(
             light_curve_mags_inds.shape[0], -1
         )
 
+        light_curve_times = np.repeat(light_curve_times, 2, axis=1)
         sort = np.argsort(light_curve_mags_inds, axis=1)[:, ::-1]
         for i, sort_i in enumerate(sort):
             light_curve_mags_inds[i] = light_curve_mags_inds[i][sort_i]
             light_curve_times[i] = light_curve_times[i][sort_i]
+            number_of_pts[i] = np.where(light_curve_mags_inds[i] != -1)[0][-1] + 1
+
+        max_num_pts_in = number_of_pts.max()
+
+        light_curve_times = light_curve_times[:, :max_num_pts_in]
+        light_curve_mags_inds = light_curve_mags_inds[:, :max_num_pts_in]
 
         # flatten everything
         light_curve_times_in = (

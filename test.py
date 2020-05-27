@@ -38,7 +38,7 @@ def test(input_dict, output_string):
     num_lcs = len(lcs)
 
     # pyce_checks = np.asarray(ce_checks)
-    ce = ConditionalEntropy(phase_bins=50, use_long=False)
+    ce = ConditionalEntropy(phase_bins=15, use_long=False)
     batch_size = 200
 
     num_pdots_for_timing = (2 ** np.arange(6)).astype(int)

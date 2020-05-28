@@ -1,6 +1,8 @@
 # gce: GPU-Accelerated Condtional Entropy
 
-gce implements the conditional entropy (CE) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum conditional entrop value.
+gce implements the conditional entropy (CE, [arXiv:1306.6664](https://arxiv.org/abs/1306.6664)) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum CE value. The minimum CE value indicates the most likely set of parameters.
+
+If you use all or any parts of this code, please cite (TODO: add arXiv) and the original conditional entropy paper ([arXiv:1306.6664](https://arxiv.org/abs/1306.6664)).
 
 ## Getting Started
 
@@ -70,72 +72,37 @@ You have two choices for install:
     python setup.py install
     ```
 
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
 ## Running the tests
 
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+TODO
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/mikekatz04/gce/tags).
+
+Current Version: 0.1.0
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **Michael Katz**
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+### Contibutors
+
+* Michael Coughlin
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the GNU License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+* Olivia Cooper
+* Kevin Burdge
+* Katie Breivik
+* Shane Larson
+* This research resulting in this code was supported by National Science Foundation under grant DGE-0948017 and the Chateaubriand Fellowship from the Office for Science \& Technology of the Embassy of France in the United States.
+* It was also supported in part through the computational resources and staff contributions provided for the Quest/Grail high performance computing facility at Northwestern University.

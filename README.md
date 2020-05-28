@@ -30,7 +30,7 @@ pip install gce
 from gcex.gce import ConditionalEntropy
 ```
 
-- To perform a test:
+5) Perform test:
 
 ```
 TODOs
@@ -38,11 +38,7 @@ TODOs
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
+To install this software, you need the [CUDA toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html), Python >3.4, numpy, and [cupy](https://cupy.chainer.org/). The CUDA toolkit must have cuda version >8.0. To run this software you need an NVIDIA GPU of compute capability >2.0.
 
 ### Installing
 

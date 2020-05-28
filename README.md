@@ -16,15 +16,20 @@ python -m pip install gce
 
   - Install from source:
 
-1. Clone the repository.
-```
-git clone https://github.com/mikekatz04/gce.git
-```
-2. Run install.
-```
-python setup.py install
-```
+    1) Clone the repository.
+
+    ```
+    git clone https://github.com/mikekatz04/gce.git
+    ```
+
+    2) Run install.
+
+    ```
+    python setup.py install
+    ```
+
 To import gce:
+
 ```
 from gcex.gce import ConditionalEntropy
 ```

@@ -40,25 +40,32 @@
 <p>gce implements the conditional entropy (CE) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum conditional entrop value.</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<dl>
-<dt>You have two choices for Install:</dt><dd><p>A) You can use pip:
-pip install gce</p>
-<blockquote>
-<div><p>python -m pip install gce</p>
-</div></blockquote>
-</dd>
-</dl>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>B) Install from source:
-    1) Clone the repository.
-        ```
-        git clone https://github.com/mikekatz04/gce.git
-        ```
-    2) Run install.
-        ```
-        python setup.py install
-        ```
+<p>You have two choices for install:</p>
+<ul>
+<li><p>You can use pip:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install gce
 </pre></div>
 </div>
+<p>or</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python -m pip install gce
+</pre></div>
+</div>
+</li>
+<li><p>Install from source:</p>
+<ol class="arabic simple">
+<li><p>Clone the repository.</p></li>
+</ol>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/mikekatz04/gce.git
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Run install.</p></li>
+</ol>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python setup.py install
+</pre></div>
+</div>
+</li>
+</ul>
 <p>To import gce:</p>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>from gcex.gce import ConditionalEntropy
 </pre></div>

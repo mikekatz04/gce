@@ -4,15 +4,59 @@ gce implements the conditional entropy (CE) search technique for periodic object
 
 ## Getting Started
 
-You have two choices for install:
-  - You can use pip:
+0) [Install Anaconda](https://docs.anaconda.com/anaconda/install/) if you do not have it.
+
+1) Create a virtual environment.
+
+```
+conda create -n gce_env numpy Cython
+```
+
+2) Use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:
+
+```
+pip install cupy-cuda92
+```
+
+3) Use pip to install gce.
+
 ```
 pip install gce
 ```
+
+4) To import gce:
+
+```
+from gcex.gce import ConditionalEntropy
+```
+
+- To perform a test:
+
+```
+TODOs
+```
+
+### Prerequisites
+
+What things you need to install the software and how to install them
+
+```
+Give examples
+```
+
+### Installing
+
+You have two choices for install:
+  - You can use pip:
+
+    ```
+    pip install gce
+    ```
   or
-```
-python -m pip install gce
-```
+
+    ```
+    python -m pip install gce
+    ```
 
   - Install from source:
 
@@ -27,26 +71,6 @@ python -m pip install gce
     ```
     python setup.py install
     ```
-
-To import gce:
-
-```
-from gcex.gce import ConditionalEntropy
-```
-
-
-
-
-
-### Prerequisites
-
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
-
-### Installing
 
 A step by step series of examples that tell you how to get a development env running
 

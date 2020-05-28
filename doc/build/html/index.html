@@ -38,8 +38,48 @@
 <div class="section" id="gce-gpu-accelerated-condtional-entropy">
 <h1>gce: GPU-Accelerated Condtional Entropy<a class="headerlink" href="#gce-gpu-accelerated-condtional-entropy" title="Permalink to this headline">¶</a></h1>
 <p>gce implements the conditional entropy (CE) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum conditional entrop value.</p>
-<div class="section" id="getting-started">
-<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="getting-started-installation">
+<h2>Getting Started / Installation<a class="headerlink" href="#getting-started-installation" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple" start="0">
+<li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if you do not have it.</p></li>
+<li><p>Create a virtual environment.</p></li>
+</ol>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>conda create -n gce_env numpy Cython
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Use pip to <a class="reference external" href="https://docs-cupy.chainer.org/en/stable/install.html">install cupy</a>. If you have cuda version 9.2, for example:</p></li>
+</ol>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install cupy-cuda92
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>Use pip to install gce.</p></li>
+</ol>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install gce
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>To import gce:</p></li>
+</ol>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>from gcex.gce import ConditionalEntropy
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>To perform a test:</p></li>
+</ul>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>TODOs
+</pre></div>
+</div>
+<div class="section" id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>What things you need to install the software and how to install them</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>Give examples
+</pre></div>
+</div>
+</div>
+<div class="section" id="installing">
+<h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
 <p>You have two choices for install:</p>
 <ul>
 <li><p>You can use pip:</p>
@@ -66,19 +106,6 @@
 </div>
 </li>
 </ul>
-<p>To import gce:</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>from gcex.gce import ConditionalEntropy
-</pre></div>
-</div>
-<div class="section" id="prerequisites">
-<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
-<p>What things you need to install the software and how to install them</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>Give examples
-</pre></div>
-</div>
-</div>
-<div class="section" id="installing">
-<h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
 <p>A step by step series of examples that tell you how to get a development env running</p>
 <p>Say what the step will be</p>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>Give the example

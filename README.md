@@ -5,19 +5,24 @@ gce implements the conditional entropy (CE) search technique for periodic object
 ## Getting Started
 
 You have two choices for Install:
-    A) You can use pip:
-    pip install gce
-      python -m pip install gce
+  A) You can use pip:
+```
+pip install gce
+```
+  or
+```
+python -m pip install gce
+```
 
-    B) Install from source:
-        1) Clone the repository.
+  B) Install from source:
+    1) Clone the repository.
 ```
 git clone https://github.com/mikekatz04/gce.git
 ```
-        2) Run install.
-            ```
-            python setup.py install
-            ```
+    2) Run install.
+```
+python setup.py install
+```
 To import gce:
 ```
 from gcex.gce import ConditionalEntropy

@@ -11,9 +11,9 @@ You have two choices for Install:
 
     B) Install from source:
         1) Clone the repository.
-            ```
-            git clone https://github.com/mikekatz04/gce.git
-            ```
+```
+git clone https://github.com/mikekatz04/gce.git
+```
         2) Run install.
             ```
             python setup.py install

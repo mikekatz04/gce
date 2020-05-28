@@ -41,7 +41,7 @@ def test(input_dict, output_string):
     ce = ConditionalEntropy(phase_bins=50, use_long=False)
     batch_size = 2
 
-    num_pdots_for_timing = (2 ** np.arange(6)).astype(int)
+    num_pdots_for_timing = (2 ** np.arange(3, 6)).astype(int)
     # num_pdots_for_timing = np.array([2, 2, 2])
     total_time = []
     time_per = []
@@ -58,6 +58,9 @@ def test(input_dict, output_string):
             return_type="best",
             show_progress=True,
         )
+        import pdb
+
+        pdb.set_trace()
         et = time.perf_counter()
         print(
             "Time per frequency per pdot per light curve:",

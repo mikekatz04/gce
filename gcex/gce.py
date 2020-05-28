@@ -58,9 +58,7 @@ class ConditionalEntropy:
         phase_bins (int): Number of phase bins.
         mag_bins (int): Number of magnitude bins.
         half_dbins (double): Half of the phase bin width.
-        ce (array): Cupy array of conditional entropy values. Shape is
-            (light curves, pdots, frequencyies).
-        ce_cpu (array): Numpy array of conditional entropy values. Shape is
+        ce (array): Numpy ndarray of conditional entropy values. Shape is
             (light curves, pdots, frequencyies).
         min_ce (double): Minimum conditional entropy value.
         mean_ce (double): Mean of the conditional entropy values.
@@ -69,11 +67,7 @@ class ConditionalEntropy:
             The formula we use for the significance is (mean - min)/std.
         best_params (tuple of lists): Best parameters determined by the minimum
             conditional entropy. The tuple will contain lists of the best
-            parameters, which may be more than one configuration. The tuple will
-            be length 1 if only one pdot is tested (tuple=(**freqs**,)).
-            It will be length 2 if multiple pdots are tested (tuple=(**freqs**, **pdots**)).
-
-
+            parameters, which may be more than one configuration.
 
     """
 
@@ -112,11 +106,7 @@ class ConditionalEntropy:
             all="ce", best="min_ce", best_params="best_params"
         )
 
-    @property
-    def ce_cpu(self):
-        return self.ce.get()
-
-    def get_best_params(self, ce):
+    def _get_best_params(self, ce):
         best_freqs = []
         best_pdots = []
         for sub in ce:
@@ -128,11 +118,21 @@ class ConditionalEntropy:
         return best_freqs, best_pdots
 
     @property
+    def best_params(self):
+        return self.best_freqs, self.best_pdots
+
+    @property
     def significance(self):
         return (self.mean_ce - self.min_ce) / self.std_ce
 
     def _single_light_curve_batch(
-        self, light_curve_split, batch_size, freqs, pdots, mag_bin_template
+        self,
+        light_curve_split,
+        pdot_batch_size,
+        freqs,
+        pdots,
+        mag_bin_template,
+        show_progress=False,
     ):
 
         # st = time.perf_counter()
@@ -206,14 +206,91 @@ class ConditionalEntropy:
         light_curve_times = light_curve_times[:, :max_num_pts_in]
         light_curve_mags_inds = light_curve_mags_inds[:, :max_num_pts_in]
 
+        split_inds = []
+        i = 0
+        while i < len(pdots):
+            i += pdot_batch_size
+            if i >= len(pdots):
+                break
+            split_inds.append(i)
+
+        pdots_split_all = np.split(pdots, split_inds)
+
+        iterator = enumerate(pdots_split_all)
+        iterator = tqdm(iterator) if show_progress else iterator
+
+        mins = []
+        means = []
+        ns = []
+        stds = []
+        bf = []
+        bp = []
+        ce_vals = []
+        for i, pdots_split in iterator:
+            out = self._single_pdot_batch(
+                light_curve_times,
+                light_curve_mags_inds,
+                number_of_pts,
+                freqs,
+                pdots_split,
+                mag_bin_template,
+                show_progress=show_progress,
+            )
+
+            mins.append(out.get("min"))
+            means.append(out.get("mean"))
+            stds.append(out.get("std"))
+            ns.append(out.get("n"))
+            bf.append(out.get("best_freqs"))
+            bp.append(out.get("best_pdots"))
+            ce_vals.append(out.get("ce_vals"))
+
+        mins = np.vstack(mins).T
+        means = np.vstack(means).T
+        ns = np.vstack(ns).T
+        stds = np.vstack(stds).T
+
+        ce_vals = np.concatenate(ce_vals, axis=1)
+
+        min_ce = np.min(mins, axis=1)
+        mean_ce = np.sum(means * ns, axis=1) / self.n
+        std_ce = np.sqrt(np.sum(stds ** 2 * ns, axis=1) / self.n)
+
+        ind_mins = np.argmin(mins, axis=1)
+
+        best_freqs = []
+        best_pdots = []
+
+        for lc_i in range(len(light_curve_times)):
+            ind_min = ind_mins[lc_i]
+            best_freqs.append(bf[ind_min][lc_i])
+            best_pdots.append(bp[ind_min][lc_i])
+
+        temp = dict(
+            mean=mean_ce,
+            std=std_ce,
+            min=min_ce,
+            best_freqs=best_freqs,
+            best_pdots=best_pdots,
+            ce_vals=ce_vals,
+        )
+
+        return temp
+
+    def _single_pdot_batch(
+        self,
+        light_curve_times,
+        light_curve_mags_inds,
+        number_of_pts,
+        freqs,
+        pdots,
+        return_type="all",
+        show_progress=False,
+    ):
         # flatten everything
         light_curve_times_in = (
             xp.asarray(light_curve_times).flatten().astype(self.dtype)
         )
-        light_curve_mags_in = xp.asarray(light_curve_mags.flatten()).astype(self.dtype)
-        light_curve_mag_bin_edges_in = xp.asarray(
-            light_curve_mag_bin_edges.flatten()
-        ).astype(self.dtype)
 
         light_curve_mags_inds_in = xp.asarray(light_curve_mags_inds.flatten()).astype(
             xp.int32
@@ -254,52 +331,26 @@ class ConditionalEntropy:
             self.half_dbins,
         )
 
-        return ce_vals_out_temp.reshape(
+        ce_vals_out_temp = ce_vals_out_temp.reshape(
             len(light_curve_times), len(pdots_in), len(freqs_in)
         )
 
-    def _single_pdot_batch(
-        self,
-        lightcurves,
-        batch_size,
-        freqs,
-        pdots,
-        mag_bin_template,
-        return_type="all",
-        show_progress=True,
-        return_ce_vals=True,
-    ):
-
-        split_inds = []
-        i = 0
-        while i < len(lightcurves):
-            i += batch_size
-            if i >= len(lightcurves):
-                break
-            split_inds.append(i)
-
-        lightcurves_split_all = np.split(lightcurves, split_inds)
-
-        iterator = enumerate(lightcurves_split_all)
-        iterator = tqdm(iterator) if show_progress else iterator
-
-        ce_vals_out = []
-        for i, light_curve_split in iterator:
-            ce_vals_out.append(
-                self._single_light_curve_batch(
-                    light_curve_split, batch_size, freqs, pdots, mag_bin_template
-                )
-            )
-
-        ce_vals_out = xp.concatenate(ce_vals_out)
+        bf, bp = self._get_best_params(ce_vals_out_temp)
 
         temp = dict(
-            mean=xp.mean(ce_vals_out.reshape(ce_vals_out.shape[0], -1), axis=1).get(),
-            n=ce_vals_out.shape[1] * ce_vals_out.shape[2],
-            std=xp.std(ce_vals_out.reshape(ce_vals_out.shape[0], -1), axis=1).get(),
-            min=xp.min(ce_vals_out.reshape(ce_vals_out.shape[0], -1), axis=1).get(),
-            ce_vals=ce_vals_out,
-            best_params=self.get_best_params(ce_vals_out),
+            mean=xp.mean(
+                ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1), axis=1
+            ).get(),
+            n=ce_vals_out_temp.shape[1] * ce_vals_out_temp.shape[2],
+            std=xp.std(
+                ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1), axis=1
+            ).get(),
+            min=xp.min(
+                ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1), axis=1
+            ).get(),
+            ce_vals=ce_vals_out_temp.get(),
+            best_freqs=bf,
+            best_pdots=bp,
         )
 
         return temp
@@ -312,7 +363,7 @@ class ConditionalEntropy:
         pdots=None,
         pdot_batch_size=None,
         return_type="all",
-        show_progress=True,
+        show_progress=False,
     ):
         """Run gce on lights curves.
 
@@ -324,17 +375,20 @@ class ConditionalEntropy:
                 information. The light curve arrays have shape
                 (2, light curve length), where 2 is the time and magnitdue.
 
-            batch_size (int): Number of light curves to run through gce for each
+            batch_size (int): Max number of light curves to run through gce for each
                 computation. Usually, the larger the number, the faster the
                 algorithm will perform, but with diminishing returns. However,
                 there is an upper limit due to memory on the GPU.
+
+                Choice here affects the memory usage on the GPU and splits up
+                the calculation as needed to stay within memory limits.
 
             freqs (1D array): Array with the frequencies to be tested.
             pdots (1D array, optional): Array with pdots to be tested. Default
                 is `None` indicating a test with 0.0 for the pdot.
 
             pdot_batch_size (int, optional): Number of pdots to run for each computation.
-                Choice here affects the memory usage and the GPU and splits up
+                Choice here affects the memory usage on the GPU and splits up
                 the calculation as needed to stay within memory limits. When
                 len(pdots) > pdot_batch_size, the calculations are run
                 separately and then combined, including statistics of the
@@ -350,7 +404,7 @@ class ConditionalEntropy:
                     `best_params`: Return best frequency and pdot values.
 
             show_progress (bool, optional): Shows progress of batch calculations
-                using tqdm. Default is True.
+                using tqdm. Default is False.
 
         Returns:
             array or lists of arrays: Return all conditional entropy values, the best conditional
@@ -359,9 +413,7 @@ class ConditionalEntropy:
         Raises:
             TypeError: `return_type` is set to a value that is not in the
                 options list.
-
-        TODOs:
-            Different Returns
+            ValueError: `pdot_batch_size` is less than one.
 
         """
 
@@ -404,98 +456,112 @@ class ConditionalEntropy:
             mag_bin_template[2 * i] = bin_start + i * dbin
             mag_bin_template[2 * i + 1] = bin_end + i * dbin
 
-        if num_pdot_batches == 1:
-            out = self._single_pdot_batch(
-                lightcurves,
-                batch_size,
+        split_inds = []
+        i = 0
+        while i < len(lightcurves):
+            i += batch_size
+            if i >= len(lightcurves):
+                break
+            split_inds.append(i)
+
+        lightcurves_split_all = np.split(lightcurves, split_inds)
+
+        iterator = enumerate(lightcurves_split_all)
+        iterator = tqdm(iterator) if show_progress else iterator
+
+        mins = []
+        means = []
+        stds = []
+        bf = []
+        bp = []
+        ce_vals = []
+        for i, light_curve_split in iterator:
+            out = self._single_light_curve_batch(
+                light_curve_split,
+                pdot_batch_size,
                 freqs,
                 pdots,
                 mag_bin_template,
                 show_progress=show_progress,
-                return_type=return_type,
             )
 
-            self.mean_ce = out.get("mean")
-            self.std_ce = out.get("std")
-            self.min_ce = out.get("min")
-            self.ce = out.get("ce_vals")
-            self.best_freqs, self.best_pdots = out.get("best_params")
-
-            if return_type == "best":
-                return self.min_ce
-            elif return_type == "best_params":
-                return (self.best_freqs, self.best_pdots)
-
-            else:
-                return self.ce
-
-        else:
-            split_inds = []
-            i = 0
-            while i < len(pdots):
-                i += pdot_batch_size
-                if i >= len(pdots):
-                    break
-                split_inds.append(i)
-
-            pdots_split_all = np.split(pdots, split_inds)
-
-            iterator = enumerate(pdots_split_all)
-            iterator = tqdm(iterator) if show_progress else iterator
-
-            means = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
-            ns = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
-            stds = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
-            mins = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
-            best_freqs_list = [
-                [None for _ in range(num_pdot_batches)] for _ in range(num_lcs)
-            ]
-            best_pdots_list = [
-                [None for _ in range(num_pdot_batches)] for _ in range(num_lcs)
-            ]
-            for i, pdots_split in iterator:
-                out = self._single_pdot_batch(
-                    lightcurves,
-                    batch_size,
-                    freqs,
-                    pdots_split,
-                    mag_bin_template,
-                    show_progress=show_progress,
-                )
-
-                best_freqs, best_pdots = out.get("best_params")
-                for lc_i in range(len(lightcurves)):
-                    means[lc_i][i] = out.get("mean")[lc_i]
-                    ns[lc_i][i] = out.get("n")[lc_i]
-                    stds[lc_i][i] = out.get("std")[lc_i]
-                    mins[lc_i][i] = out.get("min")[lc_i]
-                    best_freqs_list[lc_i][i].append(best_freqs[lc_i])
-                    best_pdots_list[lc_i][i].append(best_pdots[lc_i])
-
-            means_out = []
-            stds_out = []
-            mins_out = []
-            best_freqs_list_out = []
-            best_pdots_list_out = []
-            for i, (mean, n, std, min, best_freqs, best_pdots) in enumerate(
-                zip(means, ns, stds, mins, best_freqs_list, best_pdots_list)
-            ):
-                ind_min = np.arg_min(min)
-
-                new_mean = np.sum(ns * means) / self.n
-                means_out.append(new_mean)
-
-                var = std ** 2
-                new_std = np.sqrt(np.sum(ns * var) / self.n)
-                stds_out.append(new_std)
-
-                mins_out.append(min[ind_min])
-
-                best_freqs_list_out.append(best_freqws[ind_min])
-                best_pdots_list_out.append(best_pdots[ind_min])
+            for lc_i in range(len(light_curve_split)):
+                mins.append(out.get("min")[lc_i])
+                means.append(out.get("mean")[lc_i])
+                stds.append(out.get("std")[lc_i])
+                bf.append(out.get("best_freqs")[lc_i])
+                bp.append(out.get("best_pdots")[lc_i])
+                ce_vals.append(out.get("ce_vals")[lc_i])
 
         # self.ce_vals_out = xp.concatenate(out)
-        import pdb
+        self.min_ce = np.asarray(mins)
+        self.mean_ce = np.asarray(means)
+        self.std_ce = np.asarray(stds)
+        self.best_freqs = bf
+        self.best_pdots = bp
+        self.ce = np.asarray(ce_vals)
 
-        pdb.set_trace()
         return getattr(self, self.corresponding_func.get(return_type))
+
+
+"""
+if num_pdot_batches == 1:
+    out = self._single_pdot_batch(
+        lightcurves,
+        batch_size,
+        freqs,
+        pdots,
+        mag_bin_template,
+        show_progress=show_progress,
+        return_type=return_type,
+    )
+
+    self.mean_ce = out.get("mean")
+    self.std_ce = out.get("std")
+    self.min_ce = out.get("min")
+    self.ce = out.get("ce_vals")
+    self.best_freqs, self.best_pdots = out.get("best_params")
+
+    if return_type == "best":
+        return self.min_ce
+    elif return_type == "best_params":
+        return (self.best_freqs, self.best_pdots)
+
+    else:
+        return self.ce
+
+else:
+
+
+        best_freqs, best_pdots = out.get("best_params")
+        for lc_i in range(len(lightcurves)):
+            means[lc_i][i] = out.get("mean")[lc_i]
+            ns[lc_i][i] = out.get("n")[lc_i]
+            stds[lc_i][i] = out.get("std")[lc_i]
+            mins[lc_i][i] = out.get("min")[lc_i]
+            best_freqs_list[lc_i][i].append(best_freqs[lc_i])
+            best_pdots_list[lc_i][i].append(best_pdots[lc_i])
+
+    means_out = []
+    stds_out = []
+    mins_out = []
+    best_freqs_list_out = []
+    best_pdots_list_out = []
+    for i, (mean, n, std, min, best_freqs, best_pdots) in enumerate(
+        zip(means, ns, stds, mins, best_freqs_list, best_pdots_list)
+    ):
+
+    ind_min = np.arg_min(min)
+
+    new_mean = np.sum(ns * means) / self.n
+    means_out.append(new_mean)
+
+    var = std ** 2
+    new_std = np.sqrt(np.sum(ns * var) / self.n)
+    stds_out.append(new_std)
+
+    mins_out.append(min[ind_min])
+
+    best_freqs_list_out.append(best_freqws[ind_min])
+    best_pdots_list_out.append(best_pdots[ind_min])
+"""

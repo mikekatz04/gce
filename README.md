@@ -15,6 +15,7 @@ python -m pip install gce
 ```
 
   B) Install from source:
+
     1) Clone the repository.
 ```
 git clone https://github.com/mikekatz04/gce.git

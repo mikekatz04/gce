@@ -43,12 +43,14 @@ To install this software, you need the [CUDA toolkit](https://docs.nvidia.com/cu
 ### Installing
 
 You have two choices for install:
+
   - You can use pip:
 
     ```
     pip install gce
     ```
-  or
+
+    or
 
     ```
     python -m pip install gce

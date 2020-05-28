@@ -34,9 +34,115 @@
 <h1>Welcome to gce’s documentation!<a class="headerlink" href="#welcome-to-gce-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
+</div>
+<div class="section" id="gce-gpu-accelerated-condtional-entropy">
+<h1>gce: GPU-Accelerated Condtional Entropy<a class="headerlink" href="#gce-gpu-accelerated-condtional-entropy" title="Permalink to this headline">¶</a></h1>
+<p>gce implements the conditional entropy (CE) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum conditional entrop value.</p>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt>You have two choices for Install:</dt><dd><p>A) You can use pip:
+pip install gce</p>
+<blockquote>
+<div><p>python -m pip install gce</p>
+</div></blockquote>
+</dd>
+</dl>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>B) Install from source:
+    1) Clone the repository.
+        ```
+        git clone https://github.com/mikekatz04/gce.git
+        ```
+    2) Run install.
+        ```
+        python setup.py install
+        ```
+</pre></div>
+</div>
+<p>To import gce:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>from gcex.gce import ConditionalEntropy
+</pre></div>
+</div>
+<div class="section" id="prerequisites">
+<h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>What things you need to install the software and how to install them</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>Give examples
+</pre></div>
+</div>
+</div>
+<div class="section" id="installing">
+<h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
+<p>A step by step series of examples that tell you how to get a development env running</p>
+<p>Say what the step will be</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>Give the example
+</pre></div>
+</div>
+<p>And repeat</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>until finished
+</pre></div>
+</div>
+<p>End with an example of getting some data out of the system or using it for a little demo</p>
+</div>
+</div>
+<div class="section" id="running-the-tests">
+<h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
+<p>Explain how to run the automated tests for this system</p>
+<div class="section" id="break-down-into-end-to-end-tests">
+<h3>Break down into end to end tests<a class="headerlink" href="#break-down-into-end-to-end-tests" title="Permalink to this headline">¶</a></h3>
+<p>Explain what these tests test and why</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>Give an example
+</pre></div>
+</div>
+</div>
+<div class="section" id="and-coding-style-tests">
+<h3>And coding style tests<a class="headerlink" href="#and-coding-style-tests" title="Permalink to this headline">¶</a></h3>
+<p>Explain what these tests test and why</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>Give an example
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="deployment">
+<h2>Deployment<a class="headerlink" href="#deployment" title="Permalink to this headline">¶</a></h2>
+<p>Add additional notes about how to deploy this on a live system</p>
+</div>
+<div class="section" id="built-with">
+<h2>Built With<a class="headerlink" href="#built-with" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="http://www.dropwizard.io/1.0.2/docs/">Dropwizard</a> - The web framework used</p></li>
+<li><p><a class="reference external" href="https://maven.apache.org/">Maven</a> - Dependency Management</p></li>
+<li><p><a class="reference external" href="https://rometools.github.io/rome/">ROME</a> - Used to generate RSS Feeds</p></li>
+</ul>
+</div>
+<div class="section" id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
+<p>Please read <a class="reference external" href="https://gist.github.com/PurpleBooth/b24679402957c63ec426">CONTRIBUTING.md</a> for details on our code of conduct, and the process for submitting pull requests to us.</p>
+</div>
+<div class="section" id="versioning">
+<h2>Versioning<a class="headerlink" href="#versioning" title="Permalink to this headline">¶</a></h2>
+<p>We use <a class="reference external" href="http://semver.org/">SemVer</a> for versioning. For the versions available, see the <a class="reference external" href="https://github.com/your/project/tags">tags on this repository</a>.</p>
+</div>
+<div class="section" id="authors">
+<h2>Authors<a class="headerlink" href="#authors" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><strong>Billie Thompson</strong> - <em>Initial work</em> - <a class="reference external" href="https://github.com/PurpleBooth">PurpleBooth</a></p></li>
+</ul>
+<p>See also the list of <a class="reference external" href="https://github.com/your/project/contributors">contributors</a> who participated in this project.</p>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>This project is licensed under the MIT License - see the <a class="reference external" href="LICENSE.md">LICENSE.md</a> file for details</p>
+</div>
+<div class="section" id="acknowledgments">
+<h2>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Hat tip to anyone whose code was used</p></li>
+<li><p>Inspiration</p></li>
+<li><p>etc</p></li>
+</ul>
 <span class="target" id="module-gcex.gce"></span><dl class="class">
 <dt id="gcex.gce.ConditionalEntropy">
-<em class="property">class </em><code class="sig-prename descclassname">gcex.gce.</code><code class="sig-name descname">ConditionalEntropy</code><span class="sig-paren">(</span><em class="sig-param">phase_bins=30</em>, <em class="sig-param">mag_bins=10</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">gcex.gce.</code><code class="sig-name descname">ConditionalEntropy</code><span class="sig-paren">(</span><em class="sig-param">phase_bins=30</em>, <em class="sig-param">mag_bins=10</em>, <em class="sig-param">long_limit=2000</em>, <em class="sig-param">use_long=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Calculate the Conitional Entropy</p>
 <p>This class computes the conditional entropy for a list of light curves
@@ -46,6 +152,11 @@ along pdot and frequency axes determined by the user.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>phase_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of phase bins. Default is 30.</p></li>
 <li><p><strong>mag_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of magnitude bins. Default is 10.</p></li>
+<li><p><strong>long_limit</strong> (<em>int</em><em>, </em><em>optional</em>) – Length of a light curve where the code
+forces the use of the longer light curve version of gce.
+Default is 2,000.</p></li>
+<li><p><strong>use_long</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, use the long gce version of the
+code. Default is False.</p></li>
 </ul>
 </dd>
 </dl>
@@ -223,15 +334,14 @@ using tqdm. Default is True.</p></li>
 </dd>
 </dl>
 <dl class="simple">
-<dt>TODOs:</dt><dd><p>Add pdot batching.
-Add large light curve option.
-Look at using only one mag point.</p>
+<dt>TODOs:</dt><dd><p>Different Returns</p>
 </dd>
 </dl>
 </dd></dl>
 
 </dd></dl>
 
+</div>
 </div>
 <div class="section" id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>

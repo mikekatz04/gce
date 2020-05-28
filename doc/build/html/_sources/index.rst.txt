@@ -10,6 +10,8 @@ Welcome to gce's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+.. mdinclude:: ../../README.md
+
 .. automodule:: gcex.gce
     :members:
     :show-inheritance:

@@ -25,6 +25,7 @@ import time
 try:
     from GCE import run_gce_wrap, run_long_lc_gce_wrap
 except ImportError:
+    print("No gce.")
     pass
 
 try:
@@ -77,7 +78,7 @@ class ConditionalEntropy:
     """
 
     def __init__(
-        self, phase_bins=30, mag_bins=10, long_limit=1000, use_long=False, **kwargs
+        self, phase_bins=30, mag_bins=10, long_limit=2000, use_long=False, **kwargs
     ):
 
         prop_defaults = {"use_double": False}  # not implemented yet
@@ -107,49 +108,28 @@ class ConditionalEntropy:
             "\n",
         )
 
-    @property
-    def ce(self):
-        return self.ce_vals_out
+        self.corresponding_func = dict(
+            all="ce", best="min_ce", best_params="best_params"
+        )
 
     @property
     def ce_cpu(self):
-        return np.asarray(self.ce_vals_out)
+        return self.ce.get()
 
-    @property
-    def min_ce(self):
-        shape = self.ce_vals_out.shape
-        return xp.min(self.ce_vals_out.reshape(shape[0], -1), axis=1)
-
-    def best_params(self):
+    def get_best_params(self, ce):
         best_freqs = []
         best_pdots = []
-        for sub in self.ce_vals_out:
-            inds = xp.where(sub == sub.min())
+        for sub in ce:
+            inds = np.where(sub.get() == sub.get().min())
 
-            best_freqs.append(self.freqs[inds])
-            best_pdots.append(self.pdots[inds])
-        if len(self.pdots) == 1:
-            return best_freqs
+            best_freqs.append(self.freqs[inds[1]])
+            best_pdots.append(self.pdots[inds[0]])
 
-        else:
-            return best_freqs, best_pdots
-
-    def min_indices(self):
-        return xp.where(self.ce_vals_out == xp.min(self.ce_vals_out))
-
-    @property
-    def mean_ce(self):
-        shape = self.ce_vals_out.shape
-        return xp.mean(self.ce_vals_out.reshape(shape[0], -1), axis=1)
-
-    @property
-    def std_ce(self):
-        shape = self.ce_vals_out.shape
-        return xp.std(self.ce_vals_out.reshape(shape[0], -1), axis=1)
+        return best_freqs, best_pdots
 
     @property
     def significance(self):
-        return (self.mean_ce - self.min_ce) / self.std
+        return (self.mean_ce - self.min_ce) / self.std_ce
 
     def _single_light_curve_batch(
         self, light_curve_split, batch_size, freqs, pdots, mag_bin_template
@@ -251,9 +231,11 @@ class ConditionalEntropy:
         max_num_pts_in = number_of_pts_in.max().item()
 
         if self.use_long or max_num_pts_in > self.long_limit:
+            # print("Using long lc function version.")
             self.gce_func = run_long_lc_gce_wrap
 
         else:
+            # print("Using fast version.")
             self.gce_func = run_gce_wrap
 
         self.gce_func(
@@ -272,7 +254,9 @@ class ConditionalEntropy:
             self.half_dbins,
         )
 
-        return ce_vals_out_temp
+        return ce_vals_out_temp.reshape(
+            len(light_curve_times), len(pdots_in), len(freqs_in)
+        )
 
     def _single_pdot_batch(
         self,
@@ -281,7 +265,9 @@ class ConditionalEntropy:
         freqs,
         pdots,
         mag_bin_template,
+        return_type="all",
         show_progress=True,
+        return_ce_vals=True,
     ):
 
         split_inds = []
@@ -305,7 +291,18 @@ class ConditionalEntropy:
                 )
             )
 
-        return xp.asarray(ce_vals_out)
+        ce_vals_out = xp.concatenate(ce_vals_out)
+
+        temp = dict(
+            mean=xp.mean(ce_vals_out.reshape(ce_vals_out.shape[0], -1), axis=1).get(),
+            n=ce_vals_out.shape[1] * ce_vals_out.shape[2],
+            std=xp.std(ce_vals_out.reshape(ce_vals_out.shape[0], -1), axis=1).get(),
+            min=xp.min(ce_vals_out.reshape(ce_vals_out.shape[0], -1), axis=1).get(),
+            ce_vals=ce_vals_out,
+            best_params=self.get_best_params(ce_vals_out),
+        )
+
+        return temp
 
     def batched_run_const_nfreq(
         self,
@@ -365,7 +362,6 @@ class ConditionalEntropy:
 
         TODOs:
             Different Returns
-            fix mag_bin_determination on the second
 
         """
 
@@ -376,6 +372,9 @@ class ConditionalEntropy:
 
         if pdots is None:
             self.pdots = xp.asarray([0.0])
+            pdot_batch_size = 1
+
+        if pdot_batch_size is None:
             pdot_batch_size = 1
 
         if pdot_batch_size < 1:
@@ -394,6 +393,7 @@ class ConditionalEntropy:
 
         self.pdots = pdots
         self.freqs = freqs
+        self.n = len(pdots) * len(freqs)
 
         # setup mag bins
         bin_start = 0.0
@@ -412,7 +412,22 @@ class ConditionalEntropy:
                 pdots,
                 mag_bin_template,
                 show_progress=show_progress,
+                return_type=return_type,
             )
+
+            self.mean_ce = out.get("mean")
+            self.std_ce = out.get("std")
+            self.min_ce = out.get("min")
+            self.ce = out.get("ce_vals")
+            self.best_freqs, self.best_pdots = out.get("best_params")
+
+            if return_type == "best":
+                return self.min_ce
+            elif return_type == "best_params":
+                return (self.best_freqs, self.best_pdots)
+
+            else:
+                return self.ce
 
         else:
             split_inds = []
@@ -428,17 +443,59 @@ class ConditionalEntropy:
             iterator = enumerate(pdots_split_all)
             iterator = tqdm(iterator) if show_progress else iterator
 
-            out = []
+            means = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
+            ns = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
+            stds = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
+            mins = [[None for _ in range(num_pdot_batches)] for _ in range(num_lcs)]
+            best_freqs_list = [
+                [None for _ in range(num_pdot_batches)] for _ in range(num_lcs)
+            ]
+            best_pdots_list = [
+                [None for _ in range(num_pdot_batches)] for _ in range(num_lcs)
+            ]
             for i, pdots_split in iterator:
-                out.append(
-                    self._single_pdot_batch(
-                        lightcurves,
-                        batch_size,
-                        freqs,
-                        pdots_split,
-                        mag_bin_template,
-                        show_progress=show_progress,
-                    )
+                out = self._single_pdot_batch(
+                    lightcurves,
+                    batch_size,
+                    freqs,
+                    pdots_split,
+                    mag_bin_template,
+                    show_progress=show_progress,
                 )
 
-        return xp.concatenate(out)
+                best_freqs, best_pdots = out.get("best_params")
+                for lc_i in range(len(lightcurves)):
+                    means[lc_i][i] = out.get("mean")[lc_i]
+                    ns[lc_i][i] = out.get("n")[lc_i]
+                    stds[lc_i][i] = out.get("std")[lc_i]
+                    mins[lc_i][i] = out.get("min")[lc_i]
+                    best_freqs_list[lc_i][i].append(best_freqs[lc_i])
+                    best_pdots_list[lc_i][i].append(best_pdots[lc_i])
+
+            means_out = []
+            stds_out = []
+            mins_out = []
+            best_freqs_list_out = []
+            best_pdots_list_out = []
+            for i, (mean, n, std, min, best_freqs, best_pdots) in enumerate(
+                zip(means, ns, stds, mins, best_freqs_list, best_pdots_list)
+            ):
+                ind_min = np.arg_min(min)
+
+                new_mean = np.sum(ns * means) / self.n
+                means_out.append(new_mean)
+
+                var = std ** 2
+                new_std = np.sqrt(np.sum(ns * var) / self.n)
+                stds_out.append(new_std)
+
+                mins_out.append(min[ind_min])
+
+                best_freqs_list_out.append(best_freqws[ind_min])
+                best_pdots_list_out.append(best_pdots[ind_min])
+
+        # self.ce_vals_out = xp.concatenate(out)
+        import pdb
+
+        pdb.set_trace()
+        return getattr(self, self.corresponding_func.get(return_type))

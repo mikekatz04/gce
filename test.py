@@ -27,7 +27,7 @@ def test(input_dict, output_string):
     max_freq = 1.0 / min_period
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
 
-    input_dict = {key: input_dict[key][0:1] for key in input_dict}
+    input_dict = {key: input_dict[key][0:10] for key in input_dict}
     lcs = get_lcs_test(
         input_dict, min_pts=100, max_pts=107, verbose=25, mean_dt=7, sig_t=2
     )
@@ -38,8 +38,8 @@ def test(input_dict, output_string):
     num_lcs = len(lcs)
 
     # pyce_checks = np.asarray(ce_checks)
-    ce = ConditionalEntropy(phase_bins=15, use_long=False)
-    batch_size = 200
+    ce = ConditionalEntropy(phase_bins=50, use_long=False)
+    batch_size = 2
 
     num_pdots_for_timing = (2 ** np.arange(6)).astype(int)
     # num_pdots_for_timing = np.array([2, 2, 2])

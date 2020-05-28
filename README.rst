@@ -1,110 +1,105 @@
-########################################
+
 gce: GPU-Accelerated Condtional Entropy
-########################################
+=======================================
 
-gce implements the conditional entropy search technique
-
-.. _arXiv:1807.02511: https://arxiv.org/abs/1807.02511
-.. _arXiv:1508.07250: https://arxiv.org/abs/1508.07250
-.. _arXiv:1508.07253: https://arxiv.org/abs/1508.07253
-
-The three plots to choose from are Waterfall, Ratio, and Horizon. A Waterfall plot is a filled contour plot similar to figure 3 in the LISA Mission Proposal (arxiv:1702.00786). Ratio plots show the ratio of SNRs between two different binary and sensitivity configurations. They also include loss/gain contours showing where two configurations differ in terms of the sources they can and cannot detect. Horizon plots show line contours of multiple configurations for a given SNR value. See the original paper and notebook examples for more information.
-
-**Note**: The remainder of this introduction specifically details installation of the plotting module. It is very adaptable to different gravitational wave sources or other measurements with similar signal-to-noise properties. The ``snr_calculator`` package is listed as a requirement for BOWIE (meaning the plotting module). This package is installed with the bowie install, however, it is available separately from the plotting module. For this purpose, it has its own README and documentation `here`_.
-
-.. _here: https://mikekatz04.github.io/BOWIE/snrcalc_link.html
+gce implements the conditional entropy (CE) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum conditional entrop value.
 
 Getting Started
-===============
+---------------
 
-These instructions will get you a copy of the project up and running on your local machine for usage and testing purposes.
-
-Available via pip and on github: https://github.com/mikekatz04/BOWIE
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
 
 Prerequisites
-=============
+^^^^^^^^^^^^^
 
-It is best to run out of conda environment. It will handle the dependencies better. If you have issues with certain modules, try to update them.
+What things you need to install the software and how to install them
 
-Software installation/usage only requires a few specific libraries in python. If you install with pip, all of these libraries should be automatically installed if you do not have them (this includes ``snr_calculator``, which is required). All python libraries are included with Anaconda. If you do not run python in an anaconda environment, you  will need the following libraries and modules to run with all capabilities: Numpy, Scipy, collections, sys, json, multiprocessing, datetime, time, astropy, h5py, and matplotlib. All can be installed with pip. For example, within your python environment of choice:
+.. code-block::
 
-``pip install h5py``
+   Give examples
 
-In order to properly create waveforms with ctypes, you will need complex, gsl, and math c libraries. For installing gsl, refer to https://www.gnu.org/software/gsl/ or install it through anaconda.
+Installing
+^^^^^^^^^^
 
-``gwsnrcalc`` is also required. This will install automatically with pip install or setup.py.
+A step by step series of examples that tell you how to get a development env running
+
+Say what the step will be
+
+.. code-block::
+
+   Give the example
+
+And repeat
+
+.. code-block::
+
+   until finished
+
+End with an example of getting some data out of the system or using it for a little demo
+
+Running the tests
+-----------------
+
+Explain how to run the automated tests for this system
+
+Break down into end to end tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Explain what these tests test and why
+
+.. code-block::
+
+   Give an example
+
+And coding style tests
+^^^^^^^^^^^^^^^^^^^^^^
+
+Explain what these tests test and why
+
+.. code-block::
+
+   Give an example
+
+Deployment
+----------
+
+Add additional notes about how to deploy this on a live system
+
+Built With
+----------
 
 
-Installation
-=============
-
-Begin with updating conda:
-  ``conda update conda``
-
-Create a conda environment (change the name as desired. Default: bowie_env):
-  ``conda create -n bowie_env numpy scipy astropy h5py gsl matplotlib jupyter ipython python=3.7``
-
-Installation is done two ways:
-
-1) using pip
-
-  ``pip install bowie``
-
-  This will download all necessary packages to your current environment. It will not download the notebooks for testing and example usage.
-
-2) Clone the git repo on the command line, or download it from github. This is for all the modules, example jupyter notebooks, and extra files.
-
-  a) navigate to the directory of your choice.
-
-  b) clone the git repo on the command line.
-
-    ``git clone https://github.com/mikekatz04/BOWIE.git``
-
-  c) pip install the local files to add the modules to your environment and compile the c codes.
-
-    ``pip install ./BOWIE/``
-
-
-Testing and Running an Example
-==============================
-
-To test the codes, you run the testing notebook.
-
-``jupyter notebook quick_testing_example.ipynb``
+* `Dropwizard <http://www.dropwizard.io/1.0.2/docs/>`_ - The web framework used
+* `Maven <https://maven.apache.org/>`_ - Dependency Management
+* `ROME <https://rometools.github.io/rome/>`_ - Used to generate RSS Feeds
 
 Contributing
-============
+------------
 
-Please read `CONTRIBUTING.md`_ for details on our code of conduct, and the process for submitting pull requests to us.
-
-.. _CONTRIBUTING.md: https://gist.github.com/PurpleBooth/b24679402957c63ec426
+Please read `CONTRIBUTING.md <https://gist.github.com/PurpleBooth/b24679402957c63ec426>`_ for details on our code of conduct, and the process for submitting pull requests to us.
 
 Versioning
-=============
+----------
 
-Current version is 2.0.1.
-
-We use `SemVer`_ for versioning.
-
-.. _SemVer: http://semver.org/
+We use `SemVer <http://semver.org/>`_ for versioning. For the versions available, see the `tags on this repository <https://github.com/your/project/tags>`_.
 
 Authors
-=======
+-------
 
-* **Michael Katz** - `mikekatz04`_
 
-.. _mikekatz04: https://github.com/mikekatz04/
+* **Billie Thompson** - *Initial work* - `PurpleBooth <https://github.com/PurpleBooth>`_
 
-Please email the author with any bugs or requests.
+See also the list of `contributors <https://github.com/your/project/contributors>`_ who participated in this project.
 
 License
-=======
+-------
 
-This project is licensed under the GNU License - see the `LICENSE.md`_ file for details.
-
-.. _LICENSE.md: https://github.com/mikekatz04/BOWIE/blob/master/LICENSE
+This project is licensed under the MIT License - see the `LICENSE.md <LICENSE.md>`_ file for details
 
 Acknowledgments
-===============
+---------------
 
-* Thanks to Michael Puerrer, Sebastian Khan, Frank Ohme, Ofek Birnholtz, Lionel London for authorship of the original c code for PhenomD within LALsuite.
+
+* Hat tip to anyone whose code was used
+* Inspiration
+* etc

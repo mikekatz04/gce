@@ -93,6 +93,8 @@ Current Version: 0.1.0
 ### Contibutors
 
 * Michael Coughlin
+* Olivia Cooper
+* Kevin Burdge
 
 ## License
 
@@ -100,8 +102,6 @@ This project is licensed under the GNU License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* Olivia Cooper
-* Kevin Burdge
 * Katie Breivik
 * Shane Larson
 * This research resulting in this code was supported by National Science Foundation under grant DGE-0948017 and the Chateaubriand Fellowship from the Office for Science \& Technology of the Embassy of France in the United States.

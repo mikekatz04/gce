@@ -108,8 +108,11 @@ def py_check_ce(
 class ConditionalEntropy:
     """Calculate the Conditional Entropy
 
-    This class computes the conditional entropy for a list of light curves
-    along pdot and frequency axes determined by the user.
+    This class computes the Conditional Entropy for a list of light curves
+    along pdot and frequency axes determined by the user. It will use GPU
+    resources if available. Otherwise, it will run a slow Python version of
+    the Conditional Entropy. This Python version allows for prototyping code
+    and testing code before using the GPUs.
 
     Args:
         phase_bins (int, optional): Number of phase bins. Default is 30.
@@ -124,15 +127,15 @@ class ConditionalEntropy:
         phase_bins (int): Number of phase bins.
         mag_bins (int): Number of magnitude bins.
         half_dbins (double): Half of the phase bin width.
-        ce (array): Numpy ndarray of conditional entropy values. Shape is
+        ce (array): Numpy ndarray of Conditional Entropy values. Shape is
             (light curves, pdots, frequencyies).
-        min_ce (double): Minimum conditional entropy value.
-        mean_ce (double): Mean of the conditional entropy values.
-        std_ce (double): Standard deviation of the conditional entropy values.
+        min_ce (double): Minimum Conditional Entropy value.
+        mean_ce (double): Mean of the Conditional Entropy values.
+        std_ce (double): Standard deviation of the Conditional Entropy values.
         significance (double): Returns the significance of the observations.
             The formula we use for the significance is (mean - min)/std.
         best_params (tuple of lists): Best parameters determined by the minimum
-            conditional entropy. The tuple will contain lists of the best
+            Conditional Entropy. The tuple will contain lists of the best
             parameters, which may be more than one configuration.
 
     """
@@ -489,14 +492,14 @@ class ConditionalEntropy:
                 the calculation as needed to stay within memory limits. When
                 len(pdots) > pdot_batch_size, the calculations are run
                 separately and then combined, including statistics of the
-                conditional entropy values. Defaults to `None`, which means gce
+                Conditional Entropy values. Defaults to `None`, which means gce
                 will use the length of the pdot array as the `pdot_batch_size`.
 
             return_type (str, optional): User chosen return type.
 
                 Options:
-                    `all`: Returned conditional entropy values for every grid point.
-                    `best`: Return best conditional entropy value.
+                    `all`: Returned Conditional Entropy values for every grid point.
+                    `best`: Return best Conditional Entropy value.
                     `best_params`: Return best frequency and pdot values.
 
             show_progress (bool, optional): Shows progress of batch calculations
@@ -504,8 +507,8 @@ class ConditionalEntropy:
 
         Returns:
             array or lists of arrays: ce, best, best_params
-                Return all conditional entropy values, the best conditional
-                entropy values, or the best parameters for each light curve.
+                Return all Conditional Entropy values, the best Conditional
+                Entropy values, or the best parameters for each light curve.
 
         Raises:
             TypeError: `return_type` is set to a value that is not in the

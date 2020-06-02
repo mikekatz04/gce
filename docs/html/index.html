@@ -276,8 +276,11 @@
 <em class="property">class </em><code class="sig-prename descclassname">gcex.gce.</code><code class="sig-name descname">ConditionalEntropy</code><span class="sig-paren">(</span><em class="sig-param">phase_bins=30</em>, <em class="sig-param">mag_bins=10</em>, <em class="sig-param">long_limit=2000</em>, <em class="sig-param">use_long=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Calculate the Conditional Entropy</p>
-<p>This class computes the conditional entropy for a list of light curves
-along pdot and frequency axes determined by the user.</p>
+<p>This class computes the Conditional Entropy for a list of light curves
+along pdot and frequency axes determined by the user. It will use GPU
+resources if available. Otherwise, it will run a slow Python version of
+the Conditional Entropy. This Python version allows for prototyping code
+and testing code before using the GPUs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -327,7 +330,7 @@ code. Default is False.</p></li>
 <dl class="attribute">
 <dt id="gcex.gce.ConditionalEntropy.ce">
 <code class="sig-name descname">ce</code><a class="headerlink" href="#gcex.gce.ConditionalEntropy.ce" title="Permalink to this definition">¶</a></dt>
-<dd><p>Numpy ndarray of conditional entropy values. Shape is
+<dd><p>Numpy ndarray of Conditional Entropy values. Shape is
 (light curves, pdots, frequencyies).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -339,7 +342,7 @@ code. Default is False.</p></li>
 <dl class="attribute">
 <dt id="gcex.gce.ConditionalEntropy.min_ce">
 <code class="sig-name descname">min_ce</code><a class="headerlink" href="#gcex.gce.ConditionalEntropy.min_ce" title="Permalink to this definition">¶</a></dt>
-<dd><p>Minimum conditional entropy value.</p>
+<dd><p>Minimum Conditional Entropy value.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>double</p>
@@ -350,7 +353,7 @@ code. Default is False.</p></li>
 <dl class="attribute">
 <dt id="gcex.gce.ConditionalEntropy.mean_ce">
 <code class="sig-name descname">mean_ce</code><a class="headerlink" href="#gcex.gce.ConditionalEntropy.mean_ce" title="Permalink to this definition">¶</a></dt>
-<dd><p>Mean of the conditional entropy values.</p>
+<dd><p>Mean of the Conditional Entropy values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>double</p>
@@ -361,7 +364,7 @@ code. Default is False.</p></li>
 <dl class="attribute">
 <dt id="gcex.gce.ConditionalEntropy.std_ce">
 <code class="sig-name descname">std_ce</code><a class="headerlink" href="#gcex.gce.ConditionalEntropy.std_ce" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standard deviation of the conditional entropy values.</p>
+<dd><p>Standard deviation of the Conditional Entropy values.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
 <dd class="field-odd"><p>double</p>
@@ -385,7 +388,7 @@ The formula we use for the significance is (mean - min)/std.</p>
 <dt id="gcex.gce.ConditionalEntropy.best_params">
 <code class="sig-name descname">best_params</code><a class="headerlink" href="#gcex.gce.ConditionalEntropy.best_params" title="Permalink to this definition">¶</a></dt>
 <dd><p>Best parameters determined by the minimum
-conditional entropy. The tuple will contain lists of the best
+Conditional Entropy. The tuple will contain lists of the best
 parameters, which may be more than one configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type</dt>
@@ -421,12 +424,12 @@ Choice here affects the memory usage on the GPU and splits up
 the calculation as needed to stay within memory limits. When
 len(pdots) &gt; pdot_batch_size, the calculations are run
 separately and then combined, including statistics of the
-conditional entropy values. Defaults to <cite>None</cite>, which means gce
+Conditional Entropy values. Defaults to <cite>None</cite>, which means gce
 will use the length of the pdot array as the <cite>pdot_batch_size</cite>.</p></li>
 <li><p><strong>return_type</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>User chosen return type.</p>
 <dl class="simple">
-<dt>Options:</dt><dd><p><cite>all</cite>: Returned conditional entropy values for every grid point.
-<cite>best</cite>: Return best conditional entropy value.
+<dt>Options:</dt><dd><p><cite>all</cite>: Returned Conditional Entropy values for every grid point.
+<cite>best</cite>: Return best Conditional Entropy value.
 <cite>best_params</cite>: Return best frequency and pdot values.</p>
 </dd>
 </dl>
@@ -437,8 +440,8 @@ using tqdm. Default is False.</p></li>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl class="simple">
-<dt>ce, best, best_params</dt><dd><p>Return all conditional entropy values, the best conditional
-entropy values, or the best parameters for each light curve.</p>
+<dt>ce, best, best_params</dt><dd><p>Return all Conditional Entropy values, the best Conditional
+Entropy values, or the best parameters for each light curve.</p>
 </dd>
 </dl>
 </p>

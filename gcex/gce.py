@@ -21,6 +21,7 @@ import numpy as np
 from scipy import constants as ct
 from tqdm import tqdm
 import time
+import pickle
 
 try:
     from GCE import run_gce_wrap, run_long_lc_gce_wrap
@@ -124,7 +125,11 @@ class ConditionalEntropy:
 
     @property
     def best_params(self):
-        return self.best_freqs, self.best_pdots
+        if self.convert_f_to_p:
+            best_periods = [1.0 / bf for bf in self.best_freqs]
+            return best_periods, self.best_pdots
+        else:
+            return self.best_freqs, self.best_pdots
 
     @property
     def significance(self):
@@ -234,7 +239,7 @@ class ConditionalEntropy:
         pdots_split_all = np.split(pdots, split_inds)
 
         iterator = enumerate(pdots_split_all)
-        iterator = tqdm(iterator) if show_progress else iterator
+        iterator = tqdm(iterator, desc="pdot batch") if show_progress else iterator
 
         # maintain statistics of each batch
         mins = []
@@ -327,6 +332,7 @@ class ConditionalEntropy:
 
         # determine which function to use in gce
         if self.use_long or max_num_pts_in > self.long_limit:
+            # TODO: adjust magnitude/time inputs specific to long
             self.gce_func = run_long_lc_gce_wrap
 
         else:
@@ -382,6 +388,10 @@ class ConditionalEntropy:
         pdot_batch_size=None,
         return_type="all",
         show_progress=False,
+        pickle_out=[],
+        pickle_string="ce_out",
+        true_vals=None,
+        convert_f_to_p=False,
     ):
         """Run gce on lights curves.
 
@@ -432,8 +442,10 @@ class ConditionalEntropy:
             TypeError: `return_type` is set to a value that is not in the
                 options list.
             ValueError: `pdot_batch_size` is less than one.
+            ValueError: Key in `pickle_out` is not available.
 
         """
+        self.convert_f_to_p = convert_f_to_p
 
         if return_type not in ["all", "best", "best_params"]:
             raise TypeError(
@@ -471,7 +483,7 @@ class ConditionalEntropy:
         lightcurves_split_all = np.split(lightcurves, split_inds)
 
         iterator = enumerate(lightcurves_split_all)
-        iterator = tqdm(iterator) if show_progress else iterator
+        iterator = tqdm(iterator, desc="lc batch") if show_progress else iterator
 
         # keep track of statistics
         mins = []
@@ -481,6 +493,8 @@ class ConditionalEntropy:
         bp = []
         ce_vals = []
         for i, light_curve_split in iterator:
+
+            # run one light curve batch
             out = self._single_light_curve_batch(
                 light_curve_split,
                 pdot_batch_size,
@@ -505,5 +519,29 @@ class ConditionalEntropy:
         self.best_freqs = bf
         self.best_pdots = bp
         self.ce = np.asarray(ce_vals)
+
+        if pickle_out != []:
+            out_dict = {}
+            for key in pickle_out:
+                if key not in ["truth", "lcs"]:
+                    try:
+                        out_dict[key] = getattr(self, key)
+                    except AttributeError:
+                        raise ValueError(
+                            "Keys for pickling must be attributes. See list in documentation."
+                        )
+                elif key == "truth":
+                    out_dict[key] = true_vals
+
+                elif key == "lcs":
+                    out_dict["lcs"] = lightcurves
+
+                else:
+                    raise ValueError(
+                        "Keys for pickling must be attributes. See list in documentation."
+                    )
+
+            with open(pickle_string + ".pickle", "wb") as fp:
+                pickle.dump(out_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
         return getattr(self, self.corresponding_func.get(return_type))

@@ -123,7 +123,12 @@ class custom_build_ext(build_ext):
         build_ext.build_extensions(self)
 
 
-CUDA = locate_cuda()
+try:
+    CUDA = locate_cuda()
+    run_cuda = True
+
+except OSError:
+    run_cuda = False
 
 # Obtain the numpy include directory. This logic works across numpy versions.
 try:
@@ -133,55 +138,74 @@ except AttributeError:
 
 # lib_gsl_dir = "/opt/local/lib"
 # include_gsl_dir = "/opt/local/include"
+if run_cuda:
+    ext = Extension(
+        "GCE",
+        sources=["gcex/src/kernel.cu", "gcex/GCE.pyx"],
+        library_dirs=[CUDA["lib64"]],
+        libraries=["cudart", "cublas"],
+        language="c++",
+        runtime_library_dirs=[CUDA["lib64"]],
+        # This syntax is specific to this build system
+        # we're only going to use certain compiler args with nvcc
+        # and not with gcc the implementation of this trick is in
+        # customize_compiler()
+        extra_compile_args={
+            "gcc": ["-std=c99"],  # '-g'],
+            "nvcc": [
+                "-arch=sm_50",
+                "-gencode=arch=compute_30,code=sm_30",
+                "-gencode=arch=compute_50,code=sm_50",
+                "-gencode=arch=compute_52,code=sm_52",
+                "-gencode=arch=compute_60,code=sm_60",
+                "-gencode=arch=compute_61,code=sm_61",
+                "-gencode=arch=compute_70,code=sm_70",
+                "-gencode=arch=compute_75,code=sm_75",
+                "-gencode=arch=compute_75,code=compute_75",
+                "-std=c++11",
+                "--default-stream=per-thread",
+                "--ptxas-options=-v",
+                "-c",
+                "--compiler-options",
+                "'-fPIC'",
+                "--use_fast_math",
+            ],  # ,"-G", "-g"] # for debugging
+        },
+        include_dirs=[numpy_include, CUDA["include"], "gcex/src"],
+    )
 
-ext = Extension(
-    "GCE",
-    sources=["gcex/src/kernel.cu", "gcex/GCE.pyx"],
-    library_dirs=[CUDA["lib64"]],
-    libraries=["cudart", "cublas"],
-    language="c++",
-    runtime_library_dirs=[CUDA["lib64"]],
-    # This syntax is specific to this build system
-    # we're only going to use certain compiler args with nvcc
-    # and not with gcc the implementation of this trick is in
-    # customize_compiler()
-    extra_compile_args={
-        "gcc": ["-std=c99"],  # '-g'],
-        "nvcc": [
-            "-arch=sm_50",
-            # "-gencode=arch=compute_30,code=sm_30",
-            # "-gencode=arch=compute_50,code=sm_50",
-            # "-gencode=arch=compute_52,code=sm_52",
-            # "-gencode=arch=compute_60,code=sm_60",
-            # "-gencode=arch=compute_61,code=sm_61",
-            "-gencode=arch=compute_70,code=sm_70",
-            #'-gencode=arch=compute_75,code=sm_75',
-            #'-gencode=arch=compute_75,code=compute_75',
-            "-std=c++11",
-            "--default-stream=per-thread",
-            "--ptxas-options=-v",
-            "-c",
-            "--compiler-options",
-            "'-fPIC'",
-            "--use_fast_math",
-        ],  # ,"-G", "-g"] # for debugging
-    },
-    include_dirs=[numpy_include, CUDA["include"], "gcex/src"],
-)
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+
+if run_cuda:
+    ext_modules = [ext]
+
+else:
+    ext_modules = []
 
 setup(
     name="gcex",
-    # Random metadata. there's more you can supply
     author="Michael Katz",
-    version="0.1",
-    ext_modules=[ext],
-    packages=["gcex", "gcex.utils"],
-    py_modules=[
-        "gcex.gce",
-        "gcex.utils.getlcs",
-        "gcex.utils.io",
-        "gcex.utils.suppliment",
+    author_email="mikekatz04@gmail.com",
+    description="GPU-accelerated calculations of the Conditional Entropy for EM surveys.",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/mikekatz04/gce",
+    version="0.1.0",
+    ext_modules=ext_modules,
+    packages=["gcex"],
+    py_modules=["gcex.gce"],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
+        "Environment :: GPU :: NVIDIA CUDA",
+        "Natural Language :: English",
+        "Programming Language :: C++",
+        "Programming Language :: Cython",
+        "Programming Language :: Python :: 3.7",
     ],
+    python_requires=">=3.6",
     # Inject our custom trigger
     cmdclass={"build_ext": custom_build_ext},
     # Since the package has c code, the egg cannot be zipped

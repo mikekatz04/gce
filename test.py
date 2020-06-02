@@ -2,7 +2,7 @@ import numpy as np
 import pdb
 import time
 
-from gcex.utils.io import *
+from gcex.utils.input_output import *
 from gcex.utils.getlcs import *
 
 try:
@@ -20,29 +20,29 @@ def test(input_dict, output_string):
     min_pdot = 1e-12
     test_pdots = np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
 
-    num_freqs = int(2 ** 13)
+    num_freqs = int(2 ** 21)
     min_period = 3 / (24 * 60.0)  # 3 minutes
     max_period = 50.0  # 50 days
     min_freq = 1.0 / max_period
     max_freq = 1.0 / min_period
     test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
 
-    input_dict = {key: input_dict[key][0:200] for key in input_dict}
+    input_dict = {key: input_dict[key][0:10] for key in input_dict}
     lcs = get_lcs_test(
-        input_dict, min_pts=95, max_pts=105, verbose=25, mean_dt=3, sig_t=2
+        input_dict, min_pts=100, max_pts=107, verbose=25, mean_dt=7, sig_t=2
     )
 
-    import pdb
+    for i in range(len(lcs)):
+        lcs[i][:, 1] = np.random.normal(lcs[i][:, 1])
 
-    pdb.set_trace()
     num_lcs = len(lcs)
 
     # pyce_checks = np.asarray(ce_checks)
-    ce = ConditionalEntropy(phase_bins=50)
-    batch_size = 200
+    ce = ConditionalEntropy(phase_bins=50, use_long=False)
+    batch_size = 2
 
-    num_pdots_for_timing = (2 ** np.arange(10)).astype(int)
-
+    num_pdots_for_timing = (2 ** np.arange(3, 6)).astype(int)
+    # num_pdots_for_timing = np.array([2, 2, 2])
     total_time = []
     time_per = []
     for num_pdots in num_pdots_for_timing:
@@ -50,8 +50,17 @@ def test(input_dict, output_string):
         st = time.perf_counter()
 
         output = ce.batched_run_const_nfreq(
-            lcs, batch_size, test_freqs, test_pdots, show_progress=True
+            lcs,
+            batch_size,
+            test_freqs,  # [1000000:1001000],
+            pdots=test_pdots,
+            pdot_batch_size=2,
+            return_type="best",
+            show_progress=True,
         )
+        import pdb
+
+        pdb.set_trace()
         et = time.perf_counter()
         print(
             "Time per frequency per pdot per light curve:",
@@ -66,10 +75,10 @@ def test(input_dict, output_string):
         total_time.append(et - st)
         time_per.append((et - st) / (num_lcs * num_freqs * num_pdots))
 
-    np.save(
-        "pdot_check_timing_results_50_100",
-        np.array([num_pdots_for_timing, total_time, time_per]),
-    )
+    # np.save(
+    #    "timing_results_2_50_100",
+    #    np.array([num_pdots_for_timing, total_time, time_per]),
+    # )
     # read_out_to_hdf5(output_string, input_dict, output, test_freqs, test_pdots)
 
 

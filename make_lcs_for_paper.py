@@ -17,7 +17,8 @@ input_dict = cosmic_read_helper(
     limiting_magnitude=22.0,
 )
 
-"""plt.loglog(input_dict["radius_1"], input_dict["radius_2"], ".")
+"""
+plt.loglog(input_dict["radius_1"], input_dict["radius_2"], ".")
 plt.xlabel("r1/a")
 plt.ylabel("r2/a")
 plt.savefig("r1_vs_r2.pdf", dpi=200)
@@ -27,13 +28,13 @@ plt.show()
 print("num lcs:", input_dict["radius_1"].shape)
 lcs = get_lcs(
     input_dict,
-    min_pts=275,
-    max_pts=325,
+    min_pts=500,
+    max_pts=520,
     verbose=25,
-    mean_dt=3,
+    mean_dt=7,
     sig_t=2,
     pickle_out=True,
-    file_name_out="/projects/b1095/mkatz/gce/light_curves_more",
+    file_name_out="/projects/b1095/mkatz/gce/light_curves_more_7day_cadence.pickle",
     limiting_inc=0.0,  # degrees
     num_procs=None,
 )

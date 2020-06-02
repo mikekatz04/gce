@@ -29,6 +29,13 @@ except ImportError:
 
 
 def pointer_adjust(func):
+    """Adjusts inputs into cython
+
+    Decorator that turns python object inputs into their pointers for input
+    into cython.
+
+    """
+
     def func_wrapper(*args, **kwargs):
         targs = []
         for arg in args:

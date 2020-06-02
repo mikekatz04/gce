@@ -53,6 +53,9 @@ def run_gce_wrap(ce_vals, freqs, num_freqs, pdots,
             phase_bins, num_lcs, half_dbins)
 
 
+# wrapper function
+# pointer adjust is needed for cupy array input
+
 @pointer_adjust
 def run_long_lc_gce_wrap(ce_vals, freqs, num_freqs, pdots,
                  num_pdots, mag_bin_inds,

@@ -90,6 +90,7 @@ class ConditionalEntropy:
         else:
             self.dtype = xp.float32
 
+        # get bin widths
         dbin = 1.0 / (self.phase_bins + 1)
         self.half_dbins = dbin
 
@@ -102,6 +103,7 @@ class ConditionalEntropy:
             "\n",
         )
 
+        # set output function based on what is requested from user
         self.corresponding_func = dict(
             all="ce", best="min_ce", best_params="best_params"
         )
@@ -109,7 +111,10 @@ class ConditionalEntropy:
     def _get_best_params(self, ce):
         best_freqs = []
         best_pdots = []
+
         for sub in ce:
+
+            # find the indices where ce is minimum
             inds = np.where(sub.get() == sub.get().min())
 
             best_freqs.append(self.freqs[inds[1]])
@@ -123,19 +128,15 @@ class ConditionalEntropy:
 
     @property
     def significance(self):
+        # calculate significance of observation
         return (self.mean_ce - self.min_ce) / self.std_ce
 
     def _single_light_curve_batch(
-        self,
-        light_curve_split,
-        pdot_batch_size,
-        freqs,
-        pdots,
-        mag_bin_template,
-        show_progress=False,
+        self, light_curve_split, pdot_batch_size, freqs, pdots, show_progress=False
     ):
 
-        # st = time.perf_counter()
+        # determine maximum length of light curves in batch
+        # also find minimum and maximum magnitudes for each light curve
         max_length = 0
         number_of_pts = np.zeros((len(light_curve_split),)).astype(int)
         light_curve_mag_max = np.zeros((len(light_curve_split),))
@@ -147,14 +148,18 @@ class ConditionalEntropy:
             light_curve_mag_min[j] = np.min(lc[:, 1])
         light_curve_arr = np.zeros((len(light_curve_split), max_length, 3))
 
+        # populate light_curve_arr
         for j, lc in enumerate(light_curve_split):
             light_curve_arr[j, : len(lc)] = np.asarray(lc)
 
+        # separate time and mag info
         light_curve_times = light_curve_arr[:, :, 0]
 
         light_curve_mags = light_curve_arr[:, :, 1]
         light_curve_mags_inds = np.ones(light_curve_mags.shape + (2,)).astype(int) * -1
 
+        # setup light curve bin magnitudes
+        # adjust maximum and minimum to include all values of interest
         light_curve_mag_bin_edges = []
         for min_val, max_val in zip(light_curve_mag_min, light_curve_mag_max):
             if min_val < 0.0:
@@ -171,7 +176,12 @@ class ConditionalEntropy:
 
         light_curve_mag_bin_edges = np.asarray(light_curve_mag_bin_edges)
 
-        # figure out index of mag bin (can put on gpu for speed up)
+        # figure out index of mag bin
+        # If first mag_bin_ind is self.mag_bins or 0, then this point will
+        # not count twice
+        # find mag values that occur in overlap and record twice
+        # also makes sure mag_ind of self.mag_bins is in the
+        # index (self.mag_bins-1) bin
         for lc_i, (lc_mag, min_max) in enumerate(
             zip(light_curve_mags, light_curve_mag_bin_edges)
         ):
@@ -194,18 +204,25 @@ class ConditionalEntropy:
             light_curve_mags_inds.shape[0], -1
         )
 
+        # duplicate times for multiple magnitude bins
         light_curve_times = np.repeat(light_curve_times, 2, axis=1)
+
+        # sort so that max mag_ind is first and
+        # -1 values for no second mag bin are last
         sort = np.argsort(light_curve_mags_inds, axis=1)[:, ::-1]
         for i, sort_i in enumerate(sort):
             light_curve_mags_inds[i] = light_curve_mags_inds[i][sort_i]
             light_curve_times[i] = light_curve_times[i][sort_i]
             number_of_pts[i] = np.where(light_curve_mags_inds[i] != -1)[0][-1] + 1
 
+        # find new max number of points
         max_num_pts_in = number_of_pts.max()
 
+        # remove and values that go beyond max number of points
         light_curve_times = light_curve_times[:, :max_num_pts_in]
         light_curve_mags_inds = light_curve_mags_inds[:, :max_num_pts_in]
 
+        # split into pdot batches
         split_inds = []
         i = 0
         while i < len(pdots):
@@ -219,6 +236,7 @@ class ConditionalEntropy:
         iterator = enumerate(pdots_split_all)
         iterator = tqdm(iterator) if show_progress else iterator
 
+        # maintain statistics of each batch
         mins = []
         means = []
         ns = []
@@ -233,7 +251,6 @@ class ConditionalEntropy:
                 number_of_pts,
                 freqs,
                 pdots_split,
-                mag_bin_template,
                 show_progress=show_progress,
             )
 
@@ -256,6 +273,7 @@ class ConditionalEntropy:
         mean_ce = np.sum(means * ns, axis=1) / self.n
         std_ce = np.sqrt(np.sum(stds ** 2 * ns, axis=1) / self.n)
 
+        # find best ce values and account for batch statistics
         ind_mins = np.argmin(mins, axis=1)
 
         best_freqs = []
@@ -307,14 +325,14 @@ class ConditionalEntropy:
 
         max_num_pts_in = number_of_pts_in.max().item()
 
+        # determine which function to use in gce
         if self.use_long or max_num_pts_in > self.long_limit:
-            # print("Using long lc function version.")
             self.gce_func = run_long_lc_gce_wrap
 
         else:
-            # print("Using fast version.")
             self.gce_func = run_gce_wrap
 
+        # run a single pdot and single light curve batch
         self.gce_func(
             ce_vals_out_temp,
             freqs_in,
@@ -422,10 +440,12 @@ class ConditionalEntropy:
                 "Variable `return_type` must be set to either 'all', 'best', or 'best_params'"
             )
 
+        # defaults for pdots
         if pdots is None:
             self.pdots = xp.asarray([0.0])
             pdot_batch_size = 1
 
+        # defaults for pdot_batch_size
         if pdot_batch_size is None:
             pdot_batch_size = 1
 
@@ -434,28 +454,12 @@ class ConditionalEntropy:
                 "pdot_batch_size must be greater than or equal to one. Setting it to None defaults to 1."
             )
 
-        """
-        if return_type == "all" and pdot_batch_size > 1:
-            raise ValueError(
-                "with pdot_batch_size ({}) greater than 1, cannot return all ce values. Must set return_type to best or best_params."
-            )
-        """
-
-        num_pdot_batches = int(np.ceil(len(pdots) / pdot_batch_size))
-
+        # store for later computations
         self.pdots = pdots
         self.freqs = freqs
         self.n = len(pdots) * len(freqs)
 
-        # setup mag bins
-        bin_start = 0.0
-        bin_end = 2.0 / (self.mag_bins + 1)
-        dbin = 1.0 / (self.mag_bins + 1)
-        mag_bin_template = np.zeros(self.mag_bins * 2)
-        for i in range(self.mag_bins):
-            mag_bin_template[2 * i] = bin_start + i * dbin
-            mag_bin_template[2 * i + 1] = bin_end + i * dbin
-
+        # split by light curve batches
         split_inds = []
         i = 0
         while i < len(lightcurves):
@@ -469,6 +473,7 @@ class ConditionalEntropy:
         iterator = enumerate(lightcurves_split_all)
         iterator = tqdm(iterator) if show_progress else iterator
 
+        # keep track of statistics
         mins = []
         means = []
         stds = []
@@ -481,10 +486,10 @@ class ConditionalEntropy:
                 pdot_batch_size,
                 freqs,
                 pdots,
-                mag_bin_template,
                 show_progress=show_progress,
             )
 
+            # go through statistics of each light curve in the batch
             for lc_i in range(len(light_curve_split)):
                 mins.append(out.get("min")[lc_i])
                 means.append(out.get("mean")[lc_i])
@@ -493,7 +498,7 @@ class ConditionalEntropy:
                 bp.append(out.get("best_pdots")[lc_i])
                 ce_vals.append(out.get("ce_vals")[lc_i])
 
-        # self.ce_vals_out = xp.concatenate(out)
+        # set overall quantities of interest
         self.min_ce = np.asarray(mins)
         self.mean_ce = np.asarray(means)
         self.std_ce = np.asarray(stds)
@@ -502,66 +507,3 @@ class ConditionalEntropy:
         self.ce = np.asarray(ce_vals)
 
         return getattr(self, self.corresponding_func.get(return_type))
-
-
-"""
-if num_pdot_batches == 1:
-    out = self._single_pdot_batch(
-        lightcurves,
-        batch_size,
-        freqs,
-        pdots,
-        mag_bin_template,
-        show_progress=show_progress,
-        return_type=return_type,
-    )
-
-    self.mean_ce = out.get("mean")
-    self.std_ce = out.get("std")
-    self.min_ce = out.get("min")
-    self.ce = out.get("ce_vals")
-    self.best_freqs, self.best_pdots = out.get("best_params")
-
-    if return_type == "best":
-        return self.min_ce
-    elif return_type == "best_params":
-        return (self.best_freqs, self.best_pdots)
-
-    else:
-        return self.ce
-
-else:
-
-
-        best_freqs, best_pdots = out.get("best_params")
-        for lc_i in range(len(lightcurves)):
-            means[lc_i][i] = out.get("mean")[lc_i]
-            ns[lc_i][i] = out.get("n")[lc_i]
-            stds[lc_i][i] = out.get("std")[lc_i]
-            mins[lc_i][i] = out.get("min")[lc_i]
-            best_freqs_list[lc_i][i].append(best_freqs[lc_i])
-            best_pdots_list[lc_i][i].append(best_pdots[lc_i])
-
-    means_out = []
-    stds_out = []
-    mins_out = []
-    best_freqs_list_out = []
-    best_pdots_list_out = []
-    for i, (mean, n, std, min, best_freqs, best_pdots) in enumerate(
-        zip(means, ns, stds, mins, best_freqs_list, best_pdots_list)
-    ):
-
-    ind_min = np.arg_min(min)
-
-    new_mean = np.sum(ns * means) / self.n
-    means_out.append(new_mean)
-
-    var = std ** 2
-    new_std = np.sqrt(np.sum(ns * var) / self.n)
-    stds_out.append(new_std)
-
-    mins_out.append(min[ind_min])
-
-    best_freqs_list_out.append(best_freqws[ind_min])
-    best_pdots_list_out.append(best_pdots[ind_min])
-"""

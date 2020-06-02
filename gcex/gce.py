@@ -43,7 +43,7 @@ MTSUN = 1.989e30 * ct.G / ct.c ** 3
 class ConditionalEntropy:
     """Calculate the Conitional Entropy
 
-    This class computes the conditional entropy for a list of light curves
+    TEST This class computes the conditional entropy for a list of light curves
     along pdot and frequency axes determined by the user.
 
     Args:
@@ -511,7 +511,6 @@ class ConditionalEntropy:
                 bf.append(out.get("best_freqs")[lc_i])
                 bp.append(out.get("best_pdots")[lc_i])
                 ce_vals.append(out.get("ce_vals")[lc_i])
-
 
         # set overall quantities of interest
         self.min_ce = np.asarray(mins)

@@ -1,6 +1,6 @@
 # gce: GPU-Accelerated Condtional Entropy
 
-gce implements the conditional entropy (CE, [arXiv:1306.6664](https://arxiv.org/abs/1306.6664)) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum CE value. The minimum CE value indicates the most likely set of parameters.
+gce implements the conditional entropy (CE, [arXiv:1306.6664](https://arxiv.org/abs/1306.6664)) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum CE value. The minimum CE value indicates the most likely set of parameters. Documentation for this package can be found [here](https://mikekatz04.github.io/gce/).
 
 If you use all or any parts of this code, please cite (TODO: add arXiv) and the original conditional entropy paper ([arXiv:1306.6664](https://arxiv.org/abs/1306.6664)).
 

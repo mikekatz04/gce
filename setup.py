@@ -208,7 +208,7 @@ setup(
     version="0.1.0",
     ext_modules=ext_modules,
     packages=["gcex", "gcex.utils"],
-    py_modules=["gcex.gce"],
+    py_modules=["gcex.gce", "gcex.utils.input_output"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License (GPL)",

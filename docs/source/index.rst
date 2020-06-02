@@ -17,6 +17,10 @@ Documentation
     :members:
     :show-inheritance:
 
+.. automodule:: gcex.utils.input_output
+    :members:
+    :show-inheritance:
+
 Indices and tables
 ==================
 

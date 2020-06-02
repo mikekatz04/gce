@@ -25,19 +25,84 @@ import pickle
 
 try:
     from GCE import run_gce_wrap, run_long_lc_gce_wrap
-except ImportError:
-    print("No gce.")
-    pass
 
-try:
-    import cupy as xp
+    run_gpu = True
 
 except ImportError:
-    print("Need to install cupy.")
+    print("No gce. Running python ce version.")
+    run_gpu = False
+
+if run_gpu:
+    try:
+        import cupy as xp
+
+    except ImportError:
+        import numpy as xp
+
+        print("Need to install cupy.")
+else:
+    import numpy as xp
 
 import time
 
 MTSUN = 1.989e30 * ct.G / ct.c ** 3
+
+# module for python usage of the ce calculation
+# mainly for prototyping
+def py_check_ce(
+    ce_vals,
+    freqs_in,
+    num_freqs,
+    pdots_in,
+    num_pdots,
+    light_curve_mags_inds,
+    time_vals_in,
+    number_of_pts_in,
+    max_points,
+    mag_bins,
+    phase_bins,
+    num_lcs,
+    half_dbins,
+):
+
+    for lc_i in range(num_lcs):
+        mags = light_curve_mags_inds[lc_i * max_points : (lc_i + 1) * max_points]
+        time_vals = time_vals_in[lc_i * max_points : (lc_i + 1) * max_points]
+        for pdot_i, pdot in enumerate(pdots_in):
+            for i, frequency in enumerate(freqs_in):
+                p_ij = np.zeros((phase_bins, mag_bins))
+                period = 1.0 / frequency
+                folded = (
+                    np.fmod(
+                        time_vals - 0.5 * pdot * frequency * (time_vals * time_vals),
+                        period,
+                    )
+                    * frequency
+                )
+
+                phase_bin_inds = (folded // half_dbins).astype(int) % phase_bins
+
+                for pbi, mbi in zip(phase_bin_inds, mags):
+                    p_ij[pbi][mbi] += 1.0
+
+                # 1 overlap
+                phase_bin_inds = ((folded // half_dbins).astype(int) - 1) % phase_bins
+
+                for pbi, mbi in zip(phase_bin_inds, mags):
+                    p_ij[pbi][mbi] += 1.0
+
+                total_points = np.sum(p_ij)
+                p_j = np.tile(np.sum(p_ij, axis=1), (10, 1)).T
+
+                inds = np.where(p_ij != 0.0)
+                Hc = (
+                    1
+                    / total_points
+                    * np.sum(p_ij[inds] * np.log(p_j[inds] / p_ij[inds]))
+                )
+                ce_vals[(lc_i * num_pdots + pdot_i) * num_freqs + i] = Hc
+
+    return ce_vals
 
 
 class ConditionalEntropy:
@@ -331,12 +396,16 @@ class ConditionalEntropy:
         max_num_pts_in = number_of_pts_in.max().item()
 
         # determine which function to use in gce
-        if self.use_long or max_num_pts_in > self.long_limit:
-            # TODO: adjust magnitude/time inputs specific to long
-            self.gce_func = run_long_lc_gce_wrap
+        if run_gpu:
+            if self.use_long or max_num_pts_in > self.long_limit:
+                # TODO: adjust magnitude/time inputs specific to long
+                self.gce_func = run_long_lc_gce_wrap
+
+            else:
+                self.gce_func = run_gce_wrap
 
         else:
-            self.gce_func = run_gce_wrap
+            self.gce_func = py_check_ce
 
         # run a single pdot and single light curve batch
         self.gce_func(

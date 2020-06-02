@@ -41,7 +41,7 @@ MTSUN = 1.989e30 * ct.G / ct.c ** 3
 
 
 class ConditionalEntropy:
-    """Calculate the Conitional Entropy
+    """Calculate the Conditional Entropy
 
     This class computes the conditional entropy for a list of light curves
     along pdot and frequency axes determined by the user.

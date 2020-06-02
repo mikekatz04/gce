@@ -169,7 +169,6 @@
 <h1>gce: GPU-Accelerated Condtional Entropy<a class="headerlink" href="#gce-gpu-accelerated-condtional-entropy" title="Permalink to this headline">¶</a></h1>
 <p>gce implements the Conditional Entropy (CE, <a class="reference external" href="https://arxiv.org/abs/1306.6664">arXiv:1306.6664</a>) search technique for periodic objects in electromagnetic surveys. This implementation is specifically for use with graphics processing units (GPU). The user inputs light curves as well as grid parameters used for each CE calculation. Basic statistics are calculated for these CE grids, which are then used to assign a significance to the minimum CE value. The minimum CE value indicates the most likely set of parameters. Documentation for this package can be found <a class="reference external" href="https://mikekatz04.github.io/gce/">here</a>.</p>
 <p>If you use all or any parts of this code, please cite (TODO: add arXiv) and the original Conditional Entropy paper (<a class="reference external" href="https://arxiv.org/abs/1306.6664">arXiv:1306.6664</a>).</p>
-<p>Test.</p>
 <div class="section" id="getting-started">
 <h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple" start="0">
@@ -277,7 +276,7 @@
 <em class="property">class </em><code class="sig-prename descclassname">gcex.gce.</code><code class="sig-name descname">ConditionalEntropy</code><span class="sig-paren">(</span><em class="sig-param">phase_bins=30</em>, <em class="sig-param">mag_bins=10</em>, <em class="sig-param">long_limit=2000</em>, <em class="sig-param">use_long=False</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Calculate the Conitional Entropy</p>
-<p>TEST This class computes the conditional entropy for a list of light curves
+<p>This class computes the conditional entropy for a list of light curves
 along pdot and frequency axes determined by the user.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

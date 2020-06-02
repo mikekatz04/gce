@@ -193,7 +193,7 @@ setup(
     url="https://github.com/mikekatz04/gce",
     version="0.1.0",
     ext_modules=ext_modules,
-    packages=["gcex"],
+    packages=["gcex", "gcex.utils"],
     py_modules=["gcex.gce"],
     classifiers=[
         "Programming Language :: Python :: 3",

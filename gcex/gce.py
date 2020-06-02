@@ -118,8 +118,8 @@ class ConditionalEntropy:
             # find the indices where ce is minimum
             inds = np.where(sub.get() == sub.get().min())
 
-            best_freqs.append(self.freqs[inds[1]])
-            best_pdots.append(self.pdots[inds[0]])
+            best_freqs.append(self.test_freqs[inds[1]])
+            best_pdots.append(self.test_pdots[inds[0]])
 
         return best_freqs, best_pdots
 
@@ -454,7 +454,7 @@ class ConditionalEntropy:
 
         # defaults for pdots
         if pdots is None:
-            self.pdots = xp.asarray([0.0])
+            self.test_pdots = xp.asarray([0.0])
             pdot_batch_size = 1
 
         # defaults for pdot_batch_size
@@ -467,8 +467,8 @@ class ConditionalEntropy:
             )
 
         # store for later computations
-        self.pdots = pdots
-        self.freqs = freqs
+        self.test_pdots = pdots
+        self.test_freqs = freqs
         self.n = len(pdots) * len(freqs)
 
         # split by light curve batches

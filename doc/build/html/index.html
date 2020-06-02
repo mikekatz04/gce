@@ -185,18 +185,24 @@
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Use pip to install gce.</p></li>
+<li><p>Clone the repository.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install gce
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/mikekatz04/gce.git
 </pre></div>
 </div>
 <ol class="arabic simple" start="4">
+<li><p>Run install. Make sure CUDA is on your PATH.</p></li>
+</ol>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python setup.py install
+</pre></div>
+</div>
+<ol class="arabic simple" start="5">
 <li><p>To import gce:</p></li>
 </ol>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>from gcex.gce import ConditionalEntropy
 </pre></div>
 </div>
-<ol class="arabic simple" start="5">
+<ol class="arabic simple" start="6">
 <li><p>Perform test:</p></li>
 </ol>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>TODOs
@@ -208,18 +214,6 @@
 </div>
 <div class="section" id="installing">
 <h3>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h3>
-<p>You have two choices for install:</p>
-<ul>
-<li><p>You can use pip:</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>pip install gce
-</pre></div>
-</div>
-<p>or</p>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python -m pip install gce
-</pre></div>
-</div>
-</li>
-<li><p>Install from source:</p>
 <ol class="arabic simple">
 <li><p>Clone the repository.</p></li>
 </ol>
@@ -227,13 +221,11 @@
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
-<li><p>Run install.</p></li>
+<li><p>Run install. Make sure CUDA is on your PATH.</p></li>
 </ol>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python setup.py install
 </pre></div>
 </div>
-</li>
-</ul>
 </div>
 </div>
 <div class="section" id="running-the-tests">
@@ -404,7 +396,7 @@ parameters, which may be more than one configuration.</p>
 
 <dl class="method">
 <dt id="gcex.gce.ConditionalEntropy.batched_run_const_nfreq">
-<code class="sig-name descname">batched_run_const_nfreq</code><span class="sig-paren">(</span><em class="sig-param">lightcurves</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">freqs</em>, <em class="sig-param">pdots=None</em>, <em class="sig-param">pdot_batch_size=None</em>, <em class="sig-param">return_type='all'</em>, <em class="sig-param">show_progress=False</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy.batched_run_const_nfreq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">batched_run_const_nfreq</code><span class="sig-paren">(</span><em class="sig-param">lightcurves</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">freqs</em>, <em class="sig-param">pdots=None</em>, <em class="sig-param">pdot_batch_size=None</em>, <em class="sig-param">return_type='all'</em>, <em class="sig-param">show_progress=False</em>, <em class="sig-param">pickle_out=[]</em>, <em class="sig-param">pickle_string='ce_out'</em>, <em class="sig-param">true_vals=None</em>, <em class="sig-param">convert_f_to_p=False</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy.batched_run_const_nfreq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run gce on lights curves.</p>
 <p>This method actually performs the gce calculation.</p>
 <dl class="field-list simple">
@@ -461,6 +453,7 @@ using tqdm. Default is False.</p></li>
 <li><p><strong>TypeError</strong> – <cite>return_type</cite> is set to a value that is not in the
     options list.</p></li>
 <li><p><strong>ValueError</strong> – <cite>pdot_batch_size</cite> is less than one.</p></li>
+<li><p><strong>ValueError</strong> – Key in <cite>pickle_out</cite> is not available.</p></li>
 </ul>
 </dd>
 </dl>

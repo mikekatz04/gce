@@ -424,12 +424,9 @@ separately and then combined, including statistics of the
 conditional entropy values. Defaults to <cite>None</cite>, which means gce
 will use the length of the pdot array as the <cite>pdot_batch_size</cite>.</p></li>
 <li><p><strong>return_type</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>User chosen return type.</p>
-<dl>
-<dt>Options:</dt><dd><dl class="simple">
-<dt><cite>all</cite>: Returned conditional entropy values for every grid</dt><dd><p>point.</p>
-</dd>
-</dl>
-<p><cite>best</cite>: Return best conditional entropy value.
+<dl class="simple">
+<dt>Options:</dt><dd><p><cite>all</cite>: Returned conditional entropy values for every grid point.
+<cite>best</cite>: Return best conditional entropy value.
 <cite>best_params</cite>: Return best frequency and pdot values.</p>
 </dd>
 </dl>
@@ -440,7 +437,8 @@ using tqdm. Default is False.</p></li>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p><dl class="simple">
-<dt>Return all conditional entropy values, the best conditional</dt><dd><p>entropy values, or the best parameters for each light curve.</p>
+<dt>ce, best, best_params</dt><dd><p>Return all conditional entropy values, the best conditional
+entropy values, or the best parameters for each light curve.</p>
 </dd>
 </dl>
 </p>
@@ -491,11 +489,10 @@ This will cut any values below 0.1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>Light curves
-dictionary object: True parameters of each source</p>
+<dd class="field-even"><p>(list of Light curve arrays, dictionary of true parameters)</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list of arrays</p>
+<dd class="field-odd"><p>tuple</p>
 </dd>
 </dl>
 </dd></dl>

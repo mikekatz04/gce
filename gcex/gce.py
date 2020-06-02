@@ -495,8 +495,7 @@ class ConditionalEntropy:
             return_type (str, optional): User chosen return type.
 
                 Options:
-                    `all`: Returned conditional entropy values for every grid
-                        point.
+                    `all`: Returned conditional entropy values for every grid point.
                     `best`: Return best conditional entropy value.
                     `best_params`: Return best frequency and pdot values.
 
@@ -504,7 +503,8 @@ class ConditionalEntropy:
                 using tqdm. Default is False.
 
         Returns:
-            array or lists of arrays: Return all conditional entropy values, the best conditional
+            array or lists of arrays: ce, best, best_params
+                Return all conditional entropy values, the best conditional
                 entropy values, or the best parameters for each light curve.
 
         Raises:

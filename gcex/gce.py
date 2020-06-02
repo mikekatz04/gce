@@ -512,6 +512,7 @@ class ConditionalEntropy:
                 bp.append(out.get("best_pdots")[lc_i])
                 ce_vals.append(out.get("ce_vals")[lc_i])
 
+
         # set overall quantities of interest
         self.min_ce = np.asarray(mins)
         self.mean_ce = np.asarray(means)

@@ -26,7 +26,7 @@ pip install cupy-cuda92
 git clone https://github.com/mikekatz04/gce.git
 ```
 
-4) Run install.
+4) Run install. Make sure CUDA is on your PATH.
 
 ```
 python setup.py install
@@ -57,7 +57,7 @@ To install this software, you need the [CUDA toolkit](https://docs.nvidia.com/cu
 git clone https://github.com/mikekatz04/gce.git
 ```
 
-2) Run install.
+2) Run install. Make sure CUDA is on your PATH.
 
 ```
 python setup.py install

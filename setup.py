@@ -55,7 +55,7 @@ def locate_cuda():
         # Otherwise, search the PATH for NVCC
         nvcc = find_in_path("nvcc", os.environ["PATH"])
         if nvcc is None:
-            raise EnvironmentError(
+            raise OSError(
                 "The nvcc binary could not be "
                 "located in your $PATH. Either add it to your path, "
                 "or set $CUDAHOME"
@@ -70,9 +70,7 @@ def locate_cuda():
     }
     for k, v in iter(cudaconfig.items()):
         if not os.path.exists(v):
-            raise EnvironmentError(
-                "The CUDA %s path could not be " "located in %s" % (k, v)
-            )
+            raise OSError("The CUDA %s path could not be " "located in %s" % (k, v))
 
     return cudaconfig
 
@@ -123,11 +121,27 @@ class custom_build_ext(build_ext):
         build_ext.build_extensions(self)
 
 
+strings_for_end = []
+
+try:
+    import cupy as cp
+
+except ImportError as e:
+    strings_for_end.append(e)
+    strings_for_end.append(
+        "When installing on GPUs, install CuPy (https://cupy.chainer.org/)."
+    )
+
+
 try:
     CUDA = locate_cuda()
     run_cuda = True
 
-except OSError:
+except OSError as e:
+    strings_for_end.append(e)
+    strings_for_end.append(
+        "The CPU version will be installed for preparing algorithms offline."
+    )
     run_cuda = False
 
 # Obtain the numpy include directory. This logic works across numpy versions.
@@ -210,3 +224,10 @@ setup(
     # Since the package has c code, the egg cannot be zipped
     zip_safe=False,
 )
+
+
+if strings_for_end != []:
+    print("\n\n")
+    for string in strings_for_end:
+        print("-", string)
+    print("\n")

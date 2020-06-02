@@ -20,19 +20,25 @@ conda create -n gce_env numpy Cython
 pip install cupy-cuda92
 ```
 
-3) Use pip to install gce.
+3) Clone the repository.
 
 ```
-pip install gce
+git clone https://github.com/mikekatz04/gce.git
 ```
 
-4) To import gce:
+4) Run install.
+
+```
+python setup.py install
+```
+
+5) To import gce:
 
 ```
 from gcex.gce import ConditionalEntropy
 ```
 
-5) Perform test:
+6) Perform test:
 
 ```
 TODOs
@@ -44,33 +50,18 @@ To install this software, you need the [CUDA toolkit](https://docs.nvidia.com/cu
 
 ### Installing
 
-You have two choices for install:
 
-  - You can use pip:
+1) Clone the repository.
 
-    ```
-    pip install gce
-    ```
+```
+git clone https://github.com/mikekatz04/gce.git
+```
 
-    or
+2) Run install.
 
-    ```
-    python -m pip install gce
-    ```
-
-  - Install from source:
-
-    1) Clone the repository.
-
-    ```
-    git clone https://github.com/mikekatz04/gce.git
-    ```
-
-    2) Run install.
-
-    ```
-    python setup.py install
-    ```
+```
+python setup.py install
+```
 
 ## Running the tests
 

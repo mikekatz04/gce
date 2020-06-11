@@ -48,7 +48,7 @@ batch_size = 20
 ce.batched_run_const_nfreq(
     lcs[0:5],
     batch_size,
-    test_freqs,
+    test_freqs[0::10],
     pdots=test_pdots,
     pdot_batch_size=2,
     return_type="best_params",

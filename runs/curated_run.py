@@ -36,36 +36,11 @@ try:
 except TypeError:
     fill = 0
 
-"""
-lcs, true_vals = read_in_for_paper("input/curated_data.pickle", true_mag=True)
-
-print("Read data complete.")
-output_string = "/projects/b1095/mkatz/gce/test_verify_new_speed_32_pdot.pickle".format(
-    fill
-)
-"""
 
 ce = ConditionalEntropy(phase_bins=50, mag_bins=10, use_long=False)
 
 batch_size = 20
 
-"""
-ce.batched_run_const_nfreq(
-    lcs,
-    batch_size,
-    test_freqs,
-    pdots=test_pdots,
-    pdot_batch_size=2,
-    return_type="best_params",
-    show_progress=True,
-    pickle_out=["truth", "lcs", "significance", "best_params", "test_freqs", "test_pdots"],
-    pickle_string="ce_out_new_test_32",
-    true_vals=true_vals,
-    convert_f_to_p=True,
-)
-"""
-
-# exit()
 
 num_light_curve_sets = 3
 for i in range(0, num_light_curve_sets):  # num_light_curve_sets):
@@ -74,9 +49,6 @@ for i in range(0, num_light_curve_sets):  # num_light_curve_sets):
     )
 
     print("Read data complete.")
-    # output_string = "/projects/b1095/mkatz/gce/out_gce_{}_{}_pdot.pickle".format(
-    #    i, fill
-    # )
 
     ce.batched_run_const_nfreq(
         lcs,

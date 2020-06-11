@@ -40,6 +40,8 @@ if run_gpu:
         import numpy as xp
 
         print("Need to install cupy.")
+        exit()
+
 else:
     import numpy as xp
 

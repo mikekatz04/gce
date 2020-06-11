@@ -42,7 +42,7 @@ from gcex.gce import ConditionalEntropy
 6) Perform test:
 
 ```
-TODOs
+python tests/test.py
 ```
 
 ### Prerequisites
@@ -64,9 +64,10 @@ git clone https://github.com/mikekatz04/gce.git
 python setup.py install
 ```
 
-## Running the tests
+## Running on CPU vs. GPU
 
-TODO
+This code is designed to run on a GPU. However, it does have a CPU version that is very slow (implemented in python). This capability was added to test code locally before running on the GPUs. Therefore, if you run the test file (see above) or any other files locally on a CPU, it should run but very slowly. However, if it runs on the CPU locally, and the GPU version is installed correctly, a direct transition from the local version to the GPU version will work without making any changes to the gce interface.
+
 
 ## Contributing
 

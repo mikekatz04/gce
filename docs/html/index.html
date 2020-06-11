@@ -86,7 +86,7 @@
 <li><a class="reference internal" href="#installing">Installing</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
+<li><a class="reference internal" href="#running-on-cpu-vs-gpu">Running on CPU vs. GPU</a></li>
 <li><a class="reference internal" href="#contributing">Contributing</a></li>
 <li><a class="reference internal" href="#versioning">Versioning</a></li>
 <li><a class="reference internal" href="#authors">Authors</a><ul>
@@ -206,7 +206,7 @@ conda activate gce_env
 <ol class="arabic simple" start="6">
 <li><p>Perform test:</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>TODOs
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>python tests/test.py
 </pre></div>
 </div>
 <div class="section" id="prerequisites">
@@ -229,9 +229,9 @@ conda activate gce_env
 </div>
 </div>
 </div>
-<div class="section" id="running-the-tests">
-<h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
-<p>TODO</p>
+<div class="section" id="running-on-cpu-vs-gpu">
+<h2>Running on CPU vs. GPU<a class="headerlink" href="#running-on-cpu-vs-gpu" title="Permalink to this headline">¶</a></h2>
+<p>This code is designed to run on a GPU. However, it does have a CPU version that is very slow (implemented in python). This capability was added to test code locally before running on the GPUs. Therefore, if you run the test file (see above) or any other files locally on a CPU, it should run but very slowly. However, if it runs on the CPU locally, and the GPU version is installed correctly, a direct transition from the local version to the GPU version will work without making any changes to the gce interface.</p>
 </div>
 <div class="section" id="contributing">
 <h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>

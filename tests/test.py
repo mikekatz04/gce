@@ -1,95 +1,67 @@
 import numpy as np
 import pdb
 import time
+import pickle
 
-from gcex.utils.input_output import *
-from gcex.utils.getlcs import *
+from gcex.utils.input_output import read_in_for_paper
 
-try:
-    from gcex.gce import ConditionalEntropy
-except ImportError:
-    print("GCE not found.")
+from gcex.gce import ConditionalEntropy
 
 M_sun = 1.989e30
 
+num_pdots = int(2 ** 2)
+min_pdot = 1e-10
+max_pdot = 1e-12
+test_pdots = -1 * np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
+# test_pdots = np.array([0.0])
 
-def test(input_dict, output_string):
+baseline = 3600
+if baseline < 10:
+    fmin, fmax = 18, 1440
+else:
+    fmin, fmax = 2 / baseline, 480
 
-    num_pdots = int(2 ** 8)
-    max_pdot = 1e-10
-    min_pdot = 1e-12
-    test_pdots = np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
+samples_per_peak = 3
 
-    num_freqs = int(2 ** 21)
-    min_period = 3 / (24 * 60.0)  # 3 minutes
-    max_period = 50.0  # 50 days
-    min_freq = 1.0 / max_period
-    max_freq = 1.0 / min_period
-    test_freqs = np.logspace(np.log10(min_freq), np.log10(max_freq), num_freqs)
+df = 1.0 / (samples_per_peak * baseline)
+nf = int(np.ceil((fmax - fmin) / df))
+test_freqs = fmin + df * np.arange(nf)
 
-    input_dict = {key: input_dict[key][0:10] for key in input_dict}
-    lcs = get_lcs_test(
-        input_dict, min_pts=100, max_pts=107, verbose=25, mean_dt=7, sig_t=2
-    )
+lcs, true_vals = read_in_for_paper(
+    "input/cosmic_data.pickle", true_mag=True, num_max=100
+)
 
-    for i in range(len(lcs)):
-        lcs[i][:, 1] = np.random.normal(lcs[i][:, 1])
+print("Read data complete.")
 
-    num_lcs = len(lcs)
+try:
+    fill = len(test_pdots)
 
-    # pyce_checks = np.asarray(ce_checks)
-    ce = ConditionalEntropy(phase_bins=50, use_long=False)
-    batch_size = 2
+except TypeError:
+    fill = 0
 
-    num_pdots_for_timing = (2 ** np.arange(3, 6)).astype(int)
-    # num_pdots_for_timing = np.array([2, 2, 2])
-    total_time = []
-    time_per = []
-    for num_pdots in num_pdots_for_timing:
-        test_pdots = np.logspace(np.log10(min_pdot), np.log10(max_pdot), num_pdots)
-        st = time.perf_counter()
+output_string = "paper/check_data_cosmic_0_pdot.pickle".format(fill)
 
-        output = ce.batched_run_const_nfreq(
-            lcs,
-            batch_size,
-            test_freqs,  # [1000000:1001000],
-            pdots=test_pdots,
-            pdot_batch_size=2,
-            return_type="best",
-            show_progress=True,
-        )
-        import pdb
+ce = ConditionalEntropy(phase_bins=20, mag_bins=10, use_long=False)
 
-        pdb.set_trace()
-        et = time.perf_counter()
-        print(
-            "Time per frequency per pdot per light curve:",
-            (et - st) / (num_lcs * num_freqs * num_pdots),
-        )
-        print(
-            "Total time for {} light curves and {} frequencies and {} pdots:".format(
-                num_lcs, num_freqs, num_pdots
-            ),
-            et - st,
-        )
-        total_time.append(et - st)
-        time_per.append((et - st) / (num_lcs * num_freqs * num_pdots))
+batch_size = 20
 
-    # np.save(
-    #    "timing_results_2_50_100",
-    #    np.array([num_pdots_for_timing, total_time, time_per]),
-    # )
-    # read_out_to_hdf5(output_string, input_dict, output, test_freqs, test_pdots)
-
-
-if __name__ == "__main__":
-    # input_dict = read_helper('test_params.txt')
-    input_dict = katie_cosmic_read_helper(
-        "input/gx_save_lambda_var_alpha_025.csv",
-        x_sun=0.0,
-        y_sun=0.0,
-        z_sun=0.0,
-        use_gr=False,
-    )
-    print("Read data complete.")
-    test(input_dict, "gce_output_small_test")
+ce.batched_run_const_nfreq(
+    lcs[0:5],
+    batch_size,
+    test_freqs,
+    pdots=test_pdots,
+    pdot_batch_size=2,
+    return_type="best_params",
+    show_progress=True,
+    pickle_out=[
+        "truth",
+        "lcs",
+        "significance",
+        "best_params",
+        "test_freqs",
+        "test_pdots",
+    ],
+    pickle_string="test_out_file".format(fill),
+    true_vals=true_vals[0:5],
+    convert_f_to_p=True,
+)

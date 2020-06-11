@@ -11,7 +11,7 @@ If you use all or any parts of this code, please cite (TODO: add arXiv) and the 
 1) Create a virtual environment.
 
 ```
-conda create -n gce_env numpy Cython python=3.8
+conda create -n gce_env numpy Cython scipy tqdm python=3.8
 conda activate gce_env
 ```
 

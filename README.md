@@ -11,7 +11,8 @@ If you use all or any parts of this code, please cite (TODO: add arXiv) and the 
 1) Create a virtual environment.
 
 ```
-conda create -n gce_env numpy Cython
+conda create -n gce_env numpy Cython python=3.8
+conda activate gce_env
 ```
 
 2) Use pip to [install cupy](https://docs-cupy.chainer.org/en/stable/install.html). If you have cuda version 9.2, for example:

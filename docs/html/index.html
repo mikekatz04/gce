@@ -175,7 +175,8 @@
 <li><p><a class="reference external" href="https://docs.anaconda.com/anaconda/install/">Install Anaconda</a> if you do not have it.</p></li>
 <li><p>Create a virtual environment.</p></li>
 </ol>
-<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>conda create -n gce_env numpy Cython
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>conda create -n gce_env numpy Cython python=3.8
+conda activate gce_env
 </pre></div>
 </div>
 <ol class="arabic simple" start="2">
@@ -399,7 +400,7 @@ parameters, which may be more than one configuration.</p>
 
 <dl class="method">
 <dt id="gcex.gce.ConditionalEntropy.batched_run_const_nfreq">
-<code class="sig-name descname">batched_run_const_nfreq</code><span class="sig-paren">(</span><em class="sig-param">lightcurves</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">freqs</em>, <em class="sig-param">pdots=None</em>, <em class="sig-param">pdot_batch_size=None</em>, <em class="sig-param">return_type='all'</em>, <em class="sig-param">show_progress=False</em>, <em class="sig-param">pickle_out=[]</em>, <em class="sig-param">pickle_string='ce_out'</em>, <em class="sig-param">true_vals=None</em>, <em class="sig-param">convert_f_to_p=False</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy.batched_run_const_nfreq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">batched_run_const_nfreq</code><span class="sig-paren">(</span><em class="sig-param">lightcurves</em>, <em class="sig-param">batch_size</em>, <em class="sig-param">freqs</em>, <em class="sig-param">pdots=None</em>, <em class="sig-param">pdot_batch_size=None</em>, <em class="sig-param">return_type='all'</em>, <em class="sig-param">show_progress=False</em>, <em class="sig-param">pickle_out=[]</em>, <em class="sig-param">pickle_string='ce_out'</em>, <em class="sig-param">true_vals=None</em>, <em class="sig-param">convert_f_to_p=False</em>, <em class="sig-param">store_ce=False</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.gce.ConditionalEntropy.batched_run_const_nfreq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run gce on lights curves.</p>
 <p>This method actually performs the gce calculation.</p>
 <dl class="field-list simple">
@@ -464,7 +465,7 @@ Entropy values, or the best parameters for each light curve.</p>
 
 <span class="target" id="module-gcex.utils.input_output"></span><dl class="function">
 <dt id="gcex.utils.input_output.read_in_for_paper">
-<code class="sig-prename descclassname">gcex.utils.input_output.</code><code class="sig-name descname">read_in_for_paper</code><span class="sig-paren">(</span><em class="sig-param">fp</em>, <em class="sig-param">true_mag=True</em>, <em class="sig-param">subtract_median=True</em>, <em class="sig-param">mag_limit=20.5</em>, <em class="sig-param">rand_phase_shift=True</em>, <em class="sig-param">pdot_cut=-1e-13</em>, <em class="sig-param">mag_diff_cut=0.1</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.utils.input_output.read_in_for_paper" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gcex.utils.input_output.</code><code class="sig-name descname">read_in_for_paper</code><span class="sig-paren">(</span><em class="sig-param">fp</em>, <em class="sig-param">true_mag=True</em>, <em class="sig-param">subtract_median=True</em>, <em class="sig-param">mag_limit=20.5</em>, <em class="sig-param">rand_phase_shift=True</em>, <em class="sig-param">pdot_cut=-1e-13</em>, <em class="sig-param">mag_diff_cut=0.1</em>, <em class="sig-param">num_max=None</em><span class="sig-paren">)</span><a class="headerlink" href="#gcex.utils.input_output.read_in_for_paper" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read in light curves from file.</p>
 <p>Read in light curves saved in the format used for the gce paper.
 The light curves are saved in a dictionary object.</p>

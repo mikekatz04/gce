@@ -318,7 +318,7 @@ class ConditionalEntropy:
         stds = []
         bf = []
         bp = []
-        # ce_vals = []
+        ce_vals = []
         for i, pdots_split in iterator:
             out = self._single_pdot_batch(
                 light_curve_times,
@@ -335,14 +335,14 @@ class ConditionalEntropy:
             ns.append(out.get("n"))
             bf.append(out.get("best_freqs"))
             bp.append(out.get("best_pdots"))
-            # ce_vals.append(out.get("ce_vals"))
+            ce_vals.append(out.get("ce_vals"))
 
         mins = np.vstack(mins).T
         means = np.vstack(means).T
         ns = np.vstack(ns).T
         stds = np.vstack(stds).T
 
-        # ce_vals = np.concatenate(ce_vals, axis=1)
+        ce_vals = np.concatenate(ce_vals, axis=1)
 
         min_ce = np.min(mins, axis=1)
         mean_ce = np.sum(means * ns, axis=1) / self.n
@@ -365,7 +365,7 @@ class ConditionalEntropy:
             min=min_ce,
             best_freqs=best_freqs,
             best_pdots=best_pdots,
-            # ce_vals=ce_vals,
+            ce_vals=ce_vals,
         )
 
         return temp
@@ -446,7 +446,7 @@ class ConditionalEntropy:
             min=xp.min(
                 ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1), axis=1
             ).get(),
-            # ce_vals=ce_vals_out_temp.get(),
+            ce_vals=ce_vals_out_temp.get(),
             best_freqs=bf,
             best_pdots=bp,
         )
@@ -566,7 +566,7 @@ class ConditionalEntropy:
         stds = []
         bf = []
         bp = []
-        # ce_vals = []
+        ce_vals = []
         for i, light_curve_split in iterator:
 
             # run one light curve batch
@@ -585,7 +585,7 @@ class ConditionalEntropy:
                 stds.append(out.get("std")[lc_i])
                 bf.append(out.get("best_freqs")[lc_i])
                 bp.append(out.get("best_pdots")[lc_i])
-                # ce_vals.append(out.get("ce_vals")[lc_i])
+                ce_vals.append(out.get("ce_vals")[lc_i])
 
         # set overall quantities of interest
         self.min_ce = np.asarray(mins)
@@ -593,7 +593,7 @@ class ConditionalEntropy:
         self.std_ce = np.asarray(stds)
         self.best_freqs = bf
         self.best_pdots = bp
-        # self.ce = np.asarray(ce_vals)
+        self.ce = np.asarray(ce_vals)
 
         if pickle_out != []:
             out_dict = {}

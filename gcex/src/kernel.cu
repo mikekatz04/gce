@@ -1,4 +1,4 @@
-fod// Copyright (C) Michael Katz (2020)
+// Copyright (C) Michael Katz (2020)
 //
 // This file is part of gce
 //

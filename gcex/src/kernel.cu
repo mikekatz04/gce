@@ -1,4 +1,4 @@
-// Copyright (C) Michael Katz (2020)
+fod// Copyright (C) Michael Katz (2020)
 //
 // This file is part of gce
 //
@@ -38,11 +38,11 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 
 // Custom mod function
 __device__
-double mod_func(double x, double y)
+fod mod_func(fod x, fod y)
 {
     int num = (int) (x/y);
 
-    double check = x - (num*y);
+    fod check = x - (num*y);
 
     return check;
 }
@@ -51,13 +51,13 @@ double mod_func(double x, double y)
 // Phase fold of time and pick phase bins
 __device__
 int get_phase_bin(fod t_val, fod pdot, fod frequency, fod period, fod half_dbins, int phase_bins){
-    double folded_val = mod_func((double) t_val-0.5*pdot*frequency*(t_val*t_val), (double)period)*((double)frequency); // between 0 and 1
+    fod folded_val = mod_func((fod) t_val-0.5*pdot*frequency*(t_val*t_val), (fod)period)*((fod)frequency); // between 0 and 1
 
     // revert negative fold values
     if (folded_val < 0.0) folded_val *= -1.0;
 
     // find phase bin
-    int j = (int) abs((folded_val/(double)half_dbins));
+    int j = (int) abs((folded_val/(fod)half_dbins));
     j = j % phase_bins;
 
     return j;

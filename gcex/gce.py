@@ -25,7 +25,6 @@ import pickle
 
 try:
     from GCE import run_gce_wrap, run_long_lc_gce_wrap
-
     run_gpu = True
 
 except ImportError:
@@ -179,14 +178,17 @@ class ConditionalEntropy:
             all="ce", best="min_ce", best_params="best_params"
         )
 
-    def _get_best_params(self, ce):
+    def _get_best_params(self, ce, run_gpu=True):
         best_freqs = []
         best_pdots = []
 
         for sub in ce:
 
             # find the indices where ce is minimum
-            inds = np.where(sub.get() == sub.get().min())
+            if run_gpu:
+                inds = np.where(sub.get() == sub.get().min())
+            else:
+                inds = np.where(sub == np.min(sub))
 
             best_freqs.append(self.test_freqs[inds[1]])
             best_pdots.append(self.test_pdots[inds[0]])
@@ -432,8 +434,8 @@ class ConditionalEntropy:
         ce_vals_out_temp = ce_vals_out_temp.reshape(
             len(light_curve_times), len(pdots_in), len(freqs_in)
         )
-
-        bf, bp = self._get_best_params(ce_vals_out_temp)
+ 
+        bf, bp = self._get_best_params(ce_vals_out_temp,run_gpu=run_gpu)
 
         temp = dict(
             mean=xp.mean(

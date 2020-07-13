@@ -437,21 +437,44 @@ class ConditionalEntropy:
  
         bf, bp = self._get_best_params(ce_vals_out_temp,run_gpu=run_gpu)
 
-        temp = dict(
-            mean=xp.mean(
-                ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1), axis=1
-            ).get(),
-            n=ce_vals_out_temp.shape[1] * ce_vals_out_temp.shape[2],
-            std=xp.std(
-                ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1), axis=1
-            ).get(),
-            min=xp.min(
-                ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1), axis=1
-            ).get(),
-            ce_vals=ce_vals_out_temp.get(),
-            best_freqs=bf,
-            best_pdots=bp,
-        )
+        if run_gpu:
+            temp = dict(
+                mean=xp.mean(
+                    ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1),
+                                             axis=1
+                ).get(),
+                n=ce_vals_out_temp.shape[1] * ce_vals_out_temp.shape[2],
+                std=xp.std(
+                    ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1),
+                                             axis=1
+                ).get(),
+                min=xp.min(
+                    ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1),
+                                             axis=1
+                ).get(),
+                ce_vals=ce_vals_out_temp.get(),
+                best_freqs=bf,
+                best_pdots=bp,
+            )
+        else:
+            temp = dict(
+                mean=np.mean(
+                    ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1),
+                                             axis=1
+                ),
+                n=ce_vals_out_temp.shape[1] * ce_vals_out_temp.shape[2],
+                std=np.std(
+                    ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1),
+                                             axis=1
+                ),
+                min=np.min(
+                    ce_vals_out_temp.reshape(ce_vals_out_temp.shape[0], -1),
+                                             axis=1
+                ),
+                ce_vals=ce_vals_out_temp,
+                best_freqs=bf,
+                best_pdots=bp,
+            )
 
         return temp
 
